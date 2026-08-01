@@ -1,0 +1,25 @@
+# .NET/Avalonia build outputs
+**/[Bb]in/
+**/[Oo]bj/
+
+# User-specific files
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# IDE folders
+.idea/
+
+# VS Code workspace settings (keep shared configs if you add them)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# OS files
+.DS_Store
+Thumbs.db
