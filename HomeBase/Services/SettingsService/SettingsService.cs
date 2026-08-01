@@ -3,16 +3,20 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
+using HomeBase.Utils;
 
 namespace HomeBase.Services.SettingsService;
 
 public class LocalSettingsService
 {
+    private readonly Logger<LocalSettingsService> _log;
     private readonly string _settingsFilePath;
     private readonly Lock _fileLock = new();
 
-    public LocalSettingsService(string? settingsFilePath = null)
+    public LocalSettingsService(Logger<LocalSettingsService> log, string? settingsFilePath = null)
     {
+        _log = log;
+
         if (string.IsNullOrWhiteSpace(settingsFilePath))
         {
             var folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -51,17 +55,17 @@ public class LocalSettingsService
         if (!string.IsNullOrEmpty(directory))
         {
             Directory.CreateDirectory(directory);
-            Console.WriteLine($"Ensured directory exists: {directory}");
+            _log.LogInformation($"Ensured directory exists: {directory}");
         }
 
         if (!File.Exists(_settingsFilePath))
         {
             var defaultSettings = CreateDefaultSettingsFile();
             File.WriteAllText(_settingsFilePath, JsonSerializer.Serialize(defaultSettings, new JsonSerializerOptions { WriteIndented = true }));
-            Console.WriteLine($"Created default settings file at {_settingsFilePath}");
+            _log.LogInformation($"Created default settings file at {_settingsFilePath}");
         }
 
-        Console.WriteLine($"Settings file path: {_settingsFilePath}");
+        _log.LogInformation($"Settings file path: {_settingsFilePath}");
     }
 
     private Dictionary<string, string> CreateDefaultSettingsFile()

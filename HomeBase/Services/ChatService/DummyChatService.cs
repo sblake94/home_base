@@ -1,30 +1,30 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using HomeBase.Models;
 
 namespace HomeBase.Services.ChatService;
 
 public sealed class DummyChatService : IChatService
 {
-
     public DummyChatService()
     {
     }
-
-    public async Task<ChatMessage> SendMessage(string message)
+    
+    public async IAsyncEnumerable<string> SubmitUserMessageAsync(string newMessage)
     {
-        if (string.IsNullOrWhiteSpace(message))
+        if (string.IsNullOrWhiteSpace(newMessage))
         {
-            return new ChatMessage("Please enter a message.", DateTime.Now, false);
+            yield return "Please enter a message.";
+            yield break;
         }
 
         // Simulate a delay for sending the message
         await Task.Delay(500);
 
         // Simulate receiving a reply after sending the message
-        var reply = new ChatMessage("Echo: " + message, DateTime.Now, false);
+        var reply = "Echo: " + newMessage;
 
         // Here you would typically notify the ViewModel or some observer about the new message
-        return reply;
+        yield return reply;
     }
 }
