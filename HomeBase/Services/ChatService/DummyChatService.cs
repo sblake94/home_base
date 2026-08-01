@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using HomeBase.Models;
 
-namespace HomeBase.Services;
+namespace HomeBase.Services.ChatService;
 
 public sealed class DummyChatService : IChatService
 {
