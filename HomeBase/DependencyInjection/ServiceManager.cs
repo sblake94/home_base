@@ -3,6 +3,7 @@ using System;
 using System.Runtime.InteropServices;
 using HomeBase.Services;
 using HomeBase.Services.ChatService;
+using HomeBase.Services.SettingsService;
 using HomeBase.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,7 +17,7 @@ public static class ServiceManager
 	{
 		var services = new ServiceCollection();
 
-		RegisterChatServices(services);
+        RegisterServices(services);
 		services.AddSingleton<ChatViewModel>();
 
 		ServiceProvider = services.BuildServiceProvider(validateScopes: true);
@@ -32,8 +33,9 @@ public static class ServiceManager
 		return ServiceProvider.GetRequiredService<T>();
 	}
 
-	private static void RegisterChatServices(IServiceCollection services)
+	private static void RegisterServices(IServiceCollection services)
 	{
         services.AddSingleton<IChatService, OllamaChatService>();
+        services.AddSingleton<LocalSettingsService>();
 	}
 }
