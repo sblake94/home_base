@@ -1,0 +1,30 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Backgrounds -->
+  <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FFFFFF" />
+  <SolidColorBrush x:Key="ContentBackgroundBrush" Color="#222222" />
+  <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FFFFFF" />
+  <SolidColorBrush x:Key="ChatBubbleBackgroundBrush" Color="#444444" />
+  <SolidColorBrush x:Key="ChatBubbleOwnBackgroundBrush" Color="#445544" />
+  <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="Green" />
+
+  <!-- Text -->
+  <SolidColorBrush x:Key="TitleTextBrush" Color="#111111" />
+  <SolidColorBrush x:Key="BodyTextBrush" Color="#222222" />
+  <SolidColorBrush x:Key="SecondaryTextBrush" Color="#666666" />
+  <SolidColorBrush x:Key="ChatBubbleTextBrush" Color="#FFFFFF" />
+  <SolidColorBrush x:Key="InputTextBrush" Color="#FF0000" />
+  <SolidColorBrush x:Key="PlaceholderTextBrush" Color="#999999" />
+
+  <!-- Borders / structure -->
+  <SolidColorBrush x:Key="BorderBrush" Color="#DDDDDD" />
+  <SolidColorBrush x:Key="ChatBubbleBorderBrush" Color="#DDDDDD" />
+
+  <!-- Accent / status -->
+  <SolidColorBrush x:Key="AccentBrush" Color="#0A84FF" />
+  <SolidColorBrush x:Key="ErrorBrush" Color="#D93025" />
+  <SolidColorBrush x:Key="WarningBrush" Color="#F9AB00" />
+  <SolidColorBrush x:Key="SuccessBrush" Color="#188038" />
+
+</ResourceDictionary>

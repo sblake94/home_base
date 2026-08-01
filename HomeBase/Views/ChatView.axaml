@@ -1,0 +1,68 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:HomeBase.ViewModels"
+             xmlns:sel="clr-namespace:HomeBase.Selectors"
+             x:Class="HomeBase.Views.ChatView"
+             x:DataType="vm:ChatViewModel">
+  <Grid RowDefinitions="*,Auto" Margin="6" Background="{DynamicResource ContentBackgroundBrush}">
+    <ListBox Name="MessagesList"
+             ItemsSource="{Binding Messages}"
+             ContextMenu="{x:Null}"
+             Margin="0,0,0,6">
+      <ListBox.ItemTemplate>
+        <sel:ChatMessageTemplateSelector>
+          <sel:ChatMessageTemplateSelector.UserMessageTemplate>
+            <!--User Chat Messages-->
+            <DataTemplate DataType="vm:ChatMessageViewModel">
+              <Border Margin="4" Padding="8"
+                      Background="{DynamicResource ChatBubbleBackgroundBrush}"
+                      BorderBrush="{DynamicResource ChatBubbleBorderBrush}"
+                      CornerRadius="6" PointerPressed="Message_PointerPressed"
+                      HorizontalAlignment="Left">
+                <TextBlock TextWrapping="Wrap" Text="{Binding Text}" Foreground="{DynamicResource ChatBubbleTextBrush}" />
+              </Border>
+            </DataTemplate>
+          </sel:ChatMessageTemplateSelector.UserMessageTemplate>
+          <sel:ChatMessageTemplateSelector.OtherMessageTemplate>
+            <!--Machine Generated Chat Messages-->
+            <DataTemplate DataType="vm:ChatMessageViewModel">
+              <Border Margin="4" Padding="8"
+                      Background="{DynamicResource ChatBubbleOwnBackgroundBrush}"
+                      BorderBrush="{DynamicResource ChatBubbleBorderBrush}"
+                      CornerRadius="6" PointerPressed="Message_PointerPressed"
+                      HorizontalAlignment="Right">
+                <TextBlock TextWrapping="Wrap" Text="{Binding Text}" Foreground="{DynamicResource ChatBubbleTextBrush}" />
+              </Border>
+            </DataTemplate>
+          </sel:ChatMessageTemplateSelector.OtherMessageTemplate>
+        </sel:ChatMessageTemplateSelector>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <Grid Grid.Row="1" Margin="6,6,6,6">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+      <TextBox Name="InputBox"
+               Text="{Binding InputText, Mode=TwoWay}"
+               AcceptsReturn="False"
+               PlaceholderText="Type a message and press Enter..."
+               ContextMenu="{x:Null}"
+               Background="{DynamicResource InputBackgroundBrush}"
+               Foreground="{DynamicResource InputTextBrush}"
+               KeyDown="InputBox_KeyDown"
+               HorizontalAlignment="Stretch"
+               VerticalAlignment="Stretch"
+               Margin="0,0,6,0"
+               Grid.Column="0"/>
+      <Button Content="Send"
+              Margin="0"
+              Command="{Binding SendMessageCommand}" 
+              Background="Green"
+              Foreground="Crimson"
+              Grid.Column="1">
+        </Button>
+    </Grid>
+  </Grid>
+</UserControl>
