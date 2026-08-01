@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+option csharp_namespace = "HomeBase.Contracts.Chat.V1";
+package homebase.chat.v1;
+
+service ChatApi {
+  rpc SendMessage (SendMessageRequest) returns (stream ChatEvent);
+  rpc GetStatus (GetStatusRequest) returns (GetStatusResponse);
+}
+
+message SendMessageRequest {
+  string conversation_id = 1;
+  string request_id = 2;
+  string content = 3;
+}
+
+message ChatEvent {
+  oneof payload {
+    AssistantStarted assistant_started = 1;
+    AssistantToken assistant_token = 2;
+    AssistantCompleted assistant_completed = 3;
+    ChatError error = 4;
+  }
+}
+
+message AssistantStarted {
+  string message_id = 1;
+}
+
+message AssistantToken {
+  string text = 1;
+}
+
+message AssistantCompleted {
+  string message_id = 1;
+}
+
+message ChatError {
+  string code = 1;
+  string message = 2;
+}
+
+message GetStatusRequest {}
+
+message GetStatusResponse {
+  bool is_ready = 1;
+  string message = 2;
+}

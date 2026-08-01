@@ -3,7 +3,6 @@ using System;
 using System.Runtime.InteropServices;
 using HomeBase.Services;
 using HomeBase.Services.ChatService;
-using HomeBase.Services.SettingsService;
 using HomeBase.Utils;
 using HomeBase.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,9 +35,12 @@ public static class ServiceManager
 
 	private static void RegisterServices(IServiceCollection services)
 	{
-        services.AddSingleton<OllamaChatService>();
-        services.AddSingleton<LocalSettingsService>();
+		services.AddSingleton<CoreGrpcChannelFactory>();
+		services.AddSingleton<CoreChatService>();
+		services.AddSingleton<IChatService>(sp => sp.GetRequiredService<CoreChatService>());
+		services.AddSingleton<IBackendStatusService>(sp => sp.GetRequiredService<CoreChatService>());
 
         services.AddTransient(typeof(Logger<>));
 	}
 }
+

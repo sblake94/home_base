@@ -4,8 +4,15 @@
              xmlns:sel="clr-namespace:HomeBase.Selectors"
              x:Class="HomeBase.Views.ChatView"
              x:DataType="vm:ChatViewModel">
-  <Grid RowDefinitions="*,Auto" Margin="6" Background="{DynamicResource ContentBackgroundBrush}">
+  <Grid RowDefinitions="Auto,*,Auto" Margin="6" Background="{DynamicResource ContentBackgroundBrush}">
+    <TextBlock Grid.Row="0"
+               Text="{Binding BackendStatusMessage}"
+               IsVisible="{Binding !IsBackendAvailable}"
+               Foreground="Crimson"
+               Margin="0,0,0,6" />
+
     <ListBox Name="MessagesList"
+             Grid.Row="1"
              ItemsSource="{Binding Messages}"
              ContextMenu="{x:Null}"
              Margin="0,0,0,6">
@@ -39,9 +46,10 @@
       </ListBox.ItemTemplate>
     </ListBox>
 
-    <Grid Grid.Row="1" Margin="6,6,6,6">
+    <Grid Grid.Row="2" Margin="6,6,6,6">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
       <TextBox Name="InputBox"
@@ -56,12 +64,17 @@
                VerticalAlignment="Stretch"
                Margin="0,0,6,0"
                Grid.Column="0"/>
+      <Button Content="Cancel"
+              Margin="0,0,6,0"
+              Command="{Binding CancelSendCommand}"
+              Grid.Column="1">
+        </Button>
       <Button Content="Send"
               Margin="0"
               Command="{Binding SendMessageCommand}" 
               Background="Green"
               Foreground="Crimson"
-              Grid.Column="1">
+              Grid.Column="2">
         </Button>
     </Grid>
   </Grid>
