@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using HomeBase.DependencyInjection;
 
 namespace HomeBase;
 
@@ -15,7 +16,8 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow();
+            var chatViewModel = ServiceManager.GetRequiredService<ViewModels.ChatViewModel>();
+            desktop.MainWindow = new MainWindow(chatViewModel);
         }
 
         base.OnFrameworkInitializationCompleted();

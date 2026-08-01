@@ -13,7 +13,10 @@ public sealed class DummyChatService : IChatService
 
     public async Task<ChatMessage> SendMessage(string message)
     {
-        if (string.IsNullOrWhiteSpace(message)) return null;
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return new ChatMessage("Please enter a message.", DateTime.Now, false);
+        }
 
         // Simulate a delay for sending the message
         await Task.Delay(500);

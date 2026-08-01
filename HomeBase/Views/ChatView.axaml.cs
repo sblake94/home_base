@@ -13,7 +13,6 @@ namespace HomeBase.Views
         public ChatView()
         {
             InitializeComponent();
-            DataContext = new ChatViewModel();
         }
 
         private void InitializeComponent()
@@ -25,7 +24,7 @@ namespace HomeBase.Views
         {
             if (e.Key == Key.Enter)
             {
-                VM?.SendMessage();
+                _ = VM?.SendMessage();
                 e.Handled = true;
             }
         }

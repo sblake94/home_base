@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Threading.Tasks;
 using HomeBase.Models;
 using HomeBase.Services;
+using HomeBase.Services.ChatService;
 namespace HomeBase.ViewModels
 {
     public class ChatViewModel : INotifyPropertyChanged
@@ -22,13 +23,11 @@ namespace HomeBase.ViewModels
 
         public ICommand SendMessageCommand => new RelayCommand(async _ => await SendMessage(), _ => !string.IsNullOrWhiteSpace(InputText));
 
-        public ChatViewModel()
+        public ChatViewModel(IChatService chatService)
         {
-            _chatService = new OllamaChatService("model_name", "api_key");
+            _chatService = chatService;
             Messages.Add(new ChatMessageViewModel(new ChatMessage("Welcome to the chat.", DateTime.Now, false)));
         }
-
-
 
         public async Task SendMessage()
         {
