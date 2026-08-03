@@ -80,8 +80,17 @@ namespace HomeBase.ViewModels
             _backendStatusService = backendStatusService;
             _log = log;
             _sendMessageCommand = new RelayCommand(async _ => await SendMessage(), _ => IsBackendAvailable && !IsSending && !string.IsNullOrWhiteSpace(InputText));
-            _cancelSendCommand = new RelayCommand(_ => _sendCancellation?.Cancel(), _ => IsSending);
-
+            _cancelSendCommand = new RelayCommand(_ =>
+            {
+                try
+                {
+                    _sendCancellation?.Cancel();
+                }
+                catch (ObjectDisposedException)
+                {
+                }
+            }, _ => IsSending);
+            
             _ = RefreshBackendStatusAsync();
         }
 
