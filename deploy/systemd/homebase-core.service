@@ -1,0 +1,28 @@
+# HomeBase Core systemd user service
+#
+# Install:
+#   mkdir -p ~/.config/systemd/user
+#   cp homebase-core.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now homebase-core.service
+#
+# Logs:
+#   journalctl --user -u homebase-core.service -f
+#
+# This unit starts the process directly rather than using systemd socket
+# activation. HomeBase.Service creates and binds its own Unix domain socket
+# at $XDG_RUNTIME_DIR/homebase/core.sock on startup (see CoreSocketPath.cs).
+# True fd-based socket activation (a paired .socket unit) is a possible
+# future enhancement but is not implemented by this unit.
+[Unit]
+Description=HomeBase Core chat backend
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/share/homebase/core/HomeBase.Service
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

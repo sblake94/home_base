@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HomeBase.Services.ChatService;
@@ -10,7 +11,7 @@ public sealed class DummyChatService : IChatService
     {
     }
     
-    public async IAsyncEnumerable<string> SubmitUserMessageAsync(string newMessage)
+    public async IAsyncEnumerable<string> SubmitUserMessageAsync(string newMessage, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(newMessage))
         {
@@ -19,7 +20,7 @@ public sealed class DummyChatService : IChatService
         }
 
         // Simulate a delay for sending the message
-        await Task.Delay(500);
+        await Task.Delay(500, cancellationToken);
 
         // Simulate receiving a reply after sending the message
         var reply = "Echo: " + newMessage;
