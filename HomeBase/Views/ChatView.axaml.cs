@@ -24,25 +24,38 @@ namespace HomeBase.Views
             AvaloniaXamlLoader.Load(this);
             _messagesList = this.FindControl<ListBox>("MessagesList");
         }
+        private System.Collections.Specialized.INotifyCollectionChanged? _subscribedMessages;
 
         private void ChatView_DataContextChanged(object? sender, System.EventArgs e)
         {
-            if (VM is null)
+            if (_subscribedMessages is not null)
+            {
+                _subscribedMessages.CollectionChanged -= Messages_CollectionChanged;
+                _subscribedMessages = null;
+            }
+
+            if (VM?.Messages is null)
             {
                 return;
             }
 
-            VM.Messages.CollectionChanged += Messages_CollectionChanged;
+            _subscribedMessages = VM.Messages;
+            _subscribedMessages.CollectionChanged += Messages_CollectionChanged;
         }
 
         private void Messages_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            if (e.Action != NotifyCollectionChangedAction.Add || _messagesList is null || VM is null || VM.Messages.Count == 0)
+            if (e.Action != NotifyCollectionChangedAction.Add || _messagesList is null)
             {
                 return;
             }
 
-            Dispatcher.UIThread.Post(() => _messagesList.ScrollIntoView(VM.Messages[^1]));
+            if (sender is not System.Collections.IList list || list.Count == 0)
+            {
+                return;
+            }
+
+            Dispatcher.UIThread.Post(() => _messagesList.ScrollIntoView(list[list.Count - 1]));
         }
 
         private void InputBox_KeyDown(object? sender, KeyEventArgs e)
