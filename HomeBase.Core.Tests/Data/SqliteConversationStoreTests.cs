@@ -3,7 +3,7 @@ using System.IO;
 using HomeBase.Core.Data;
 using Xunit;
 
-namespace HomeBase.Core.Tests;
+namespace HomeBase.Core.Tests.Data;
 
 public class SqliteConversationStoreTests : IDisposable
 {

@@ -4,7 +4,7 @@ using System.Text.Json;
 using HomeBase.Core.Settings;
 using Xunit;
 
-namespace HomeBase.Core.Tests;
+namespace HomeBase.Core.Tests.Settings;
 
 public class CoreSettingsTests : IDisposable
 {

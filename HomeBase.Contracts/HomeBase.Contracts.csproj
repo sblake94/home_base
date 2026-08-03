@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <Protobuf Include="Protos/chat.proto" GrpcServices="Both" />
+    <Protobuf Include="Protos/documents.proto" GrpcServices="Both" />
   </ItemGroup>
 
 </Project>
