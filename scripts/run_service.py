@@ -5,11 +5,11 @@ import subprocess
 def main():
     # Build HomeBase Solution
     print("Building HomeBase Solution...")
-    subprocess.run(["dotnet", "build"], check=True)
+    subprocess.run(["dotnet", "build", "HomeBase.slnx"], check=True)
 
     # Run HomeBase Service
     print("Running HomeBase Service...")
-    subprocess.run(["dotnet", "run", "--project", "HomeBase.Service"], check=True)
+    subprocess.run(["dotnet", "run", "--project", "HomeBase.Service/HomeBase.Service.csproj"], check=True)
 
 if __name__ == "__main__":
     main()
