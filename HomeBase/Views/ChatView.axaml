@@ -4,7 +4,7 @@
              xmlns:sel="clr-namespace:HomeBase.Selectors"
              x:Class="HomeBase.Views.ChatView"
              x:DataType="vm:ChatViewModel">
-  <Grid RowDefinitions="Auto,*,Auto" Margin="6" Background="{DynamicResource ContentBackgroundBrush}">
+  <Grid RowDefinitions="Auto,*,Auto" Background="{DynamicResource ContentBackgroundBrush}">
     <TextBlock Grid.Row="0"
                Text="{Binding BackendStatusMessage}"
                IsVisible="{Binding !IsBackendAvailable}"

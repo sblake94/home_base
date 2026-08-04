@@ -14,11 +14,22 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <views:ChatView DataContext="{Binding ChatViewModel}"
-                        Grid.Column="0" />
-        <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Left" Background="Gray" />
-        <views:TextEditorView Grid.Column="1" />
+
+        <!-- TODO: Replace this Grid with a "window/tab" decorator -->
+        <Grid Grid.Column="0" Margin="10">
+            <views:ChatView DataContext="{Binding ChatViewModel}"/>
+        </Grid>
+
+        <GridSplitter Grid.Column="1" Width="5" Background="{StaticResource ResourceKey=GridSplitterBackground}"
+                      Margin="0" ResizeBehavior="PreviousAndNext"/>
+        
+        <!-- TODO: Replace this Grid with a "window/tab" decorator -->
+        <Grid Grid.Column="2" Margin="10">
+            <views:TextEditorView/>
+        </Grid>
+
     </Grid>
 </Window>
