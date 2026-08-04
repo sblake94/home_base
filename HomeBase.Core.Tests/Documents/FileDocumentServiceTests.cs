@@ -48,7 +48,7 @@ public class FileDocumentServiceTests : IDisposable
 
 		var exception = await Assert.ThrowsAsync<FileNotFoundException>(() => service.ReadAsync(path));
 
-		Assert.Contains(path, exception.Message);
+		Assert.Equal(path, exception.FileName);
 	}
 
 	[Fact]
@@ -98,4 +98,13 @@ public class FileDocumentServiceTests : IDisposable
 
 		Assert.Equal("Path is outside the document workspace.", exception.Message);
 	}
+
+    	
+ 	[Fact]
+ 	public async Task RejectsEmptyPath()
+ 	{
+ 		var service = CreateService();
+ 		var exception = await Assert.ThrowsAsync<DocumentServiceException>(() => service.WriteAsync(string.Empty, "content"));
+ 		Assert.Equal(FileDocumentService.InvalidPathErrorCode, exception.ErrorCode);
+ 	}
 }

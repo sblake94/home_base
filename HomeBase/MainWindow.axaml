@@ -1,11 +1,24 @@
 <Window xmlns="https://github.com/avaloniaui"
+        xmlns:controls="using:Dock.Model.Mvvm.Controls"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:di="clr-namespace:HomeBase.DependencyInjection"
+        xmlns:vm="clr-namespace:HomeBase.ViewModels"
         xmlns:views="clr-namespace:HomeBase.Views"
-        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="600"
-        Width="400" Height="600"
+        WindowState="Maximized"
+        Title="HomeBase"
+        mc:Ignorable="d"
         x:Class="HomeBase.MainWindow"
-        Title="HomeBase">
-    <views:ChatView />
+        x:DataType="vm:MainWindowViewModel">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <views:ChatView DataContext="{Binding ChatViewModel}"
+                        Grid.Column="0" />
+        <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Left" Background="Gray" />
+        <views:TextEditorView Grid.Column="1" />
+    </Grid>
 </Window>

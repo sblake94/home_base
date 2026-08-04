@@ -18,7 +18,9 @@ public static class ServiceManager
 		var services = new ServiceCollection();
 
         RegisterServices(services);
+
 		services.AddSingleton<ChatViewModel>();
+		services.AddSingleton<MainWindowViewModel>();
 
 		ServiceProvider = services.BuildServiceProvider(validateScopes: true);
 	}

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HomeBase.Services;
 using HomeBase.Services.ChatService;
+using HomeBase.Commands;
 using System;
 using HomeBase.Utils;
 using Avalonia.Threading;

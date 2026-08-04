@@ -49,7 +49,10 @@ public sealed class DocumentGrpcService(
         }
         catch (OperationCanceledException) when (context.CancellationToken.IsCancellationRequested)
         {
-            throw;
+            logger.LogError(
+                "Document open operation was canceled for path {Path}",
+                request.Path);
+            throw new RpcException(new Status(StatusCode.Cancelled, "Operation was canceled."));
         }
     }
 
@@ -75,26 +78,39 @@ public sealed class DocumentGrpcService(
                 "Unable to save document at path {Path}: {Message}",
                 request.Path,
                 exception.Message);
-
-            return new SaveDocumentResponse
-            {
-                Success = false,
-                ErrorCode = exception.ErrorCode,
-                ErrorMessage = exception.Message
-            };
+            throw new RpcException(new Status(StatusCode.Internal, "Internal error while saving document"));
         }
         catch (UnauthorizedAccessException exception)
         {
-            return new SaveDocumentResponse
-            {
-                Success = false,
-                ErrorCode = "ACCESS_DENIED",
-                ErrorMessage = exception.Message
-            };
+            logger.LogWarning(
+                "Unauthorized access while saving document at path {Path}: {Message}",
+                request.Path,
+                exception.Message);
+            throw new RpcException(new Status(StatusCode.PermissionDenied, "Permission denied while saving document"));
+        }
+        catch (IOException exception)
+        {
+            logger.LogWarning(
+                "I/O error while saving document at path {Path}: {Message}",
+                request.Path,
+                exception.Message);
+            throw new RpcException(new Status(StatusCode.Internal, "I/O error while saving document"));
         }
         catch (OperationCanceledException) when (context.CancellationToken.IsCancellationRequested)
         {
-            throw;
+            logger.LogError(
+                "Document save operation was canceled for path {Path}",
+                request.Path);
+            throw new RpcException(new Status(StatusCode.Cancelled, "Operation was canceled."));
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(
+                exception,
+                "Unexpected error while saving document at path {Path}: {Message}",
+                request.Path,
+                exception.Message);
+            throw new RpcException(new Status(StatusCode.Internal, "Unexpected error while saving document"));
         }
     }
 }

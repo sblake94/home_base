@@ -10,9 +10,9 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
-    public MainWindow(ChatViewModel chatViewModel)
+    public MainWindow(MainWindowViewModel mainWindowViewModel)
     {
         InitializeComponent();
-        DataContext = chatViewModel;
+        DataContext = mainWindowViewModel;
     }
 }
