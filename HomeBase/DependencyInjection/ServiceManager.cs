@@ -20,6 +20,7 @@ public static class ServiceManager
         RegisterServices(services);
 
 		services.AddSingleton<ChatViewModel>();
+		services.AddTransient<TextEditorViewModel>();
 		services.AddSingleton<MainWindowViewModel>();
 
 		ServiceProvider = services.BuildServiceProvider(validateScopes: true);
