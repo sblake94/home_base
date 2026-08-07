@@ -1,8 +1,5 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
 using HomeBase.Core.Documents;
-using Xunit;
+using HomeBase.SharedLib.Logging;
 
 namespace HomeBase.Core.Tests.Documents;
 
@@ -24,7 +21,7 @@ public class FileDocumentServiceTests : IDisposable
 		}
 	}
 
-	private FileDocumentService CreateService() => new(_tempDirectory);
+	private FileDocumentService CreateService() => new(_tempDirectory, new LoggerFactory());
 
 	[Fact]
 	public async Task WritesAndReadsDocumentContent()

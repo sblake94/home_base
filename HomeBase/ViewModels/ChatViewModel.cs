@@ -8,7 +8,7 @@ using HomeBase.Services;
 using HomeBase.Services.ChatService;
 using HomeBase.Commands;
 using System;
-using HomeBase.Utils;
+using HomeBase.SharedLib.Logging;
 using Avalonia.Threading;
 
 namespace HomeBase.ViewModels
@@ -17,7 +17,7 @@ namespace HomeBase.ViewModels
     {
         private readonly IChatService _chatService;
         private readonly IBackendStatusService _backendStatusService;
-        private readonly Logger<ChatViewModel> _log;
+        private readonly ILogger<ChatViewModel> _log;
         private readonly RelayCommand _sendMessageCommand;
         private readonly RelayCommand _cancelSendCommand;
         private CancellationTokenSource? _sendCancellation;
@@ -75,11 +75,11 @@ namespace HomeBase.ViewModels
         public ICommand SendMessageCommand => _sendMessageCommand;
         public ICommand CancelSendCommand => _cancelSendCommand;
 
-        public ChatViewModel(IChatService chatService, IBackendStatusService backendStatusService, Logger<ChatViewModel> log)
+        public ChatViewModel(IChatService chatService, IBackendStatusService backendStatusService, ILoggerFactory loggerFactory)
         {
             _chatService = chatService;
             _backendStatusService = backendStatusService;
-            _log = log;
+            _log = loggerFactory.CreateLogger<ChatViewModel>();
             _sendMessageCommand = new RelayCommand(async _ => await SendMessage(), _ => IsBackendAvailable && !IsSending && !string.IsNullOrWhiteSpace(InputText));
             _cancelSendCommand = new RelayCommand(_ =>
             {
@@ -129,7 +129,7 @@ namespace HomeBase.ViewModels
                     await Dispatcher.UIThread.InvokeAsync(() => assistantMessage.Text += token);
                 }
 
-                _log.LogInformation($"User message submitted: {text}");
+                _log.LogInfo($"User message submitted: {text}");
             }
             catch (OperationCanceledException)
             {
@@ -137,12 +137,12 @@ namespace HomeBase.ViewModels
             }
             catch (CoreChatException exception)
             {
-                _log.LogInformation($"Chat backend reported an error: {exception.Code} - {exception.Message}");
+                _log.LogInfo($"Chat backend reported an error: {exception.Code} - {exception.Message}");
                 await Dispatcher.UIThread.InvokeAsync(() => assistantMessage.Text += $"\n{exception.Message}");
             }
             catch (Exception exception)
             {
-                _log.LogInformation($"Failed to submit user message: {exception.Message}");
+                _log.LogInfo($"Failed to submit user message: {exception.Message}");
                 await Dispatcher.UIThread.InvokeAsync(() => assistantMessage.Text += "\nUnable to receive a response.");
                 await RefreshBackendStatusAsync();
             }

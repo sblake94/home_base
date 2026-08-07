@@ -2,11 +2,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HomeBase.Contracts\HomeBase.Contracts.csproj" />
+    <ProjectReference Include="..\HomeBase.SharedLib\HomeBase.SharedLib.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="OllamaSharp" Version="5.4.30" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.10" />
   </ItemGroup>
 
   <PropertyGroup>

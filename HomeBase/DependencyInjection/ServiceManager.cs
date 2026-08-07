@@ -3,7 +3,8 @@ using System;
 using System.Runtime.InteropServices;
 using HomeBase.Services;
 using HomeBase.Services.ChatService;
-using HomeBase.Utils;
+using HomeBase.Services.DocumentService;
+using HomeBase.SharedLib.Logging;
 using HomeBase.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -41,9 +42,11 @@ public static class ServiceManager
 		services.AddSingleton<CoreGrpcChannelFactory>();
 		services.AddSingleton<CoreChatService>();
 		services.AddSingleton<IChatService>(sp => sp.GetRequiredService<CoreChatService>());
+		services.AddSingleton<DocumentService>();
+		services.AddSingleton<IDocumentService>(sp => sp.GetRequiredService<DocumentService>());
 		services.AddSingleton<IBackendStatusService>(sp => sp.GetRequiredService<CoreChatService>());
 
-        services.AddTransient(typeof(Logger<>));
+        services.AddSingleton<ILoggerFactory, LoggerFactory>();
 	}
 }
 

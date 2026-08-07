@@ -1,17 +1,19 @@
+using HomeBase.SharedLib.Logging;
 namespace HomeBase.Core.Documents;
 
 public sealed class FileDocumentService : IDocumentService
 {
+    private readonly ILogger<FileDocumentService> _logger;
     public static readonly string InvalidPathErrorCode = "INVALID_PATH";
     public static readonly string PathOutsideWorkspaceErrorCode = "PATH_OUTSIDE_WORKSPACE";
-
-
     private readonly string _rootDirectory;
 
-    public FileDocumentService(string rootDirectory)
+
+    public FileDocumentService(string rootDirectory, ILoggerFactory loggerFactory)
     {
         _rootDirectory = Path.GetFullPath(rootDirectory);
         Directory.CreateDirectory(_rootDirectory);
+        _logger = loggerFactory.CreateLogger<FileDocumentService>();
     }
 
     private string ResolvePath(string path)
@@ -36,6 +38,7 @@ public sealed class FileDocumentService : IDocumentService
             relativePath.StartsWith($"..{Path.DirectorySeparatorChar}") ||
             Path.IsPathRooted(relativePath))
         {
+            _logger.LogWarning($"Attempted access to path outside workspace: {fullPath}");
             throw new DocumentServiceException(PathOutsideWorkspaceErrorCode, "Path is outside the document workspace.");
         }
 

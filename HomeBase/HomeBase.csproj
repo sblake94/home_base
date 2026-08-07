@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\HomeBase.Contracts\HomeBase.Contracts.csproj"/>
+    <ProjectReference Include="..\HomeBase.SharedLib\HomeBase.SharedLib.csproj"/>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.1.1"/>
@@ -18,7 +19,7 @@
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.8"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10"/>
     <PackageReference Include="Grpc.Net.Client" Version="2.76.0"/>
   </ItemGroup>
 </Project>

@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="HomeBase.SharedLib/HomeBase.SharedLib.csproj" />
   <Project Path="HomeBase.Contracts/HomeBase.Contracts.csproj" />
   <Project Path="HomeBase.Core.Tests/HomeBase.Core.Tests.csproj" />
   <Project Path="HomeBase.Core/HomeBase.Core.csproj" />
