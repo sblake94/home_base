@@ -92,4 +92,16 @@ public sealed class FileDocumentService : IDocumentService
         }
         return File.WriteAllTextAsync(resolvedPath, content, cancellationToken);
     }
+
+    public List<string> ListDocuments()
+    {
+        var documents = new List<string>();
+        foreach (var file in Directory.EnumerateFiles(_rootDirectory, "*", SearchOption.AllDirectories))
+        {
+            // Get the relative path from the root directory
+            var relativePath = Path.GetRelativePath(_rootDirectory, file);
+            documents.Add(relativePath);
+        }
+        return documents;
+    }
 }

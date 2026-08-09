@@ -1,13 +1,14 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using HomeBase.Core.Data;
+using HomeBase.Core.Documents;
 using HomeBase.Core.Settings;
+using HomeBase.Core.Tools;
+using HomeBase.SharedLib.Logging;
 using OllamaSharp;
+using OllamaSharp.Models.Chat;
+using OllamaSharp.Tools;
 using OllamaChat = OllamaSharp.Chat;
 
 namespace HomeBase.Core.Chat;
@@ -17,11 +18,19 @@ public sealed class OllamaConversationService : IConversationService
     private readonly CoreSettings _settings;
     private readonly IConversationStore _store;
     private readonly ConcurrentDictionary<string, ConversationState> _conversations = new();
+    private readonly IDocumentService _fileDocumentService;
+    private readonly ILogger<OllamaConversationService> _log;
 
-    public OllamaConversationService(CoreSettings settings, IConversationStore store)
+    public OllamaConversationService(
+        IDocumentService fileDocumentService, 
+        CoreSettings settings, 
+        IConversationStore store,
+        ILoggerFactory loggerFactory)
     {
+        _fileDocumentService = fileDocumentService;
         _settings = settings;
         _store = store;
+        _log = loggerFactory.CreateLogger<OllamaConversationService>();
     }
 
     public async IAsyncEnumerable<ChatStreamEvent> SendMessageAsync(
@@ -42,6 +51,13 @@ public sealed class OllamaConversationService : IConversationService
         }
 
         var state = _conversations.GetOrAdd(conversationId, _ => CreateConversation());
+        state.Tools.Clear();
+        state.Tools.AddRange(
+        [
+            new ListDocumentsTool(_fileDocumentService)
+        ]);
+        state.Chat.OnToolCall += HandleToolCall;
+        state.Chat.OnToolResult += HandleToolResult;
         await state.SendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
 
         var messageId = Guid.NewGuid().ToString("N");
@@ -52,7 +68,7 @@ public sealed class OllamaConversationService : IConversationService
         var cancelled = false;
         Exception? failure = null;
 
-        var enumerator = state.Chat.SendAsync(content).GetAsyncEnumerator(cancellationToken);
+        var enumerator = state.Chat.SendAsync(content, state.Tools).GetAsyncEnumerator(cancellationToken);
         try
         {
             yield return new AssistantStarted(messageId);
@@ -112,6 +128,7 @@ public sealed class OllamaConversationService : IConversationService
         yield return new AssistantCompleted(messageId);
     }
 
+
     public ValueTask<(bool IsReady, string Message)> GetStatusAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -135,6 +152,16 @@ public sealed class OllamaConversationService : IConversationService
         }
     }
 
+    private void HandleToolResult(object? sender, ToolResult e)
+    {
+        _log.LogInfo($"Tool result received: {e.Tool.GetType().Name} - {e.Result}");
+    }
+
+    private void HandleToolCall(object? sender, Message.ToolCall e)
+    {
+        _log.LogInfo($"Tool called: {e.Function.Name} - {e.Function.Arguments}");
+    }
+
     private ConversationState CreateConversation()
     {
         var settings = _settings.GetOllamaSettings();
@@ -151,5 +178,6 @@ public sealed class OllamaConversationService : IConversationService
 
         public OllamaChat Chat { get; }
         public SemaphoreSlim SendLock { get; } = new(1, 1);
+        public List<Tool> Tools { get; } = new();
     }
 }

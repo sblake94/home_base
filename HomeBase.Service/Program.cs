@@ -23,10 +23,11 @@ var documentWorkspace =
         "HomeBase",
         "Documents");
 
-HomeBase.SharedLib.Logging.ILoggerFactory loggerFactory = new HomeBase.SharedLib.Logging.LoggerFactory();
-
+builder.Services.AddSingleton<HomeBase.SharedLib.Logging.ILoggerFactory, HomeBase.SharedLib.Logging.LoggerFactory>();
 builder.Services.AddSingleton<IDocumentService>(
-    _ => new FileDocumentService(documentWorkspace, loggerFactory));
+    sp => new FileDocumentService(
+        documentWorkspace,
+        sp.GetRequiredService<HomeBase.SharedLib.Logging.ILoggerFactory>()));
 
 
 builder.Services.AddGrpc();

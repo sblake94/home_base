@@ -4,7 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using HomeBase.Core.Chat;
 using HomeBase.Core.Data;
+using HomeBase.Core.Documents;
 using HomeBase.Core.Settings;
+using HomeBase.SharedLib.Logging;
 using Xunit;
 
 namespace HomeBase.Core.Tests.Chat;
@@ -16,12 +18,14 @@ public class OllamaConversationServiceValidationTests : IDisposable
 
     public OllamaConversationServiceValidationTests()
     {
+        var loggerFactory = new LoggerFactory();
         _tempDirectory = Path.Combine(Path.GetTempPath(), "homebase-conversation-tests-" + Guid.NewGuid().ToString("N"));
         var settings = new CoreSettings(
             Path.Combine(_tempDirectory, "settings.json"),
             Path.Combine(_tempDirectory, "legacy", "local_settings.json"));
         var store = new SqliteConversationStore(Path.Combine(_tempDirectory, "homebase.db"));
-        _service = new OllamaConversationService(settings, store);
+        var fileDocumentService = new FileDocumentService(Path.Combine(_tempDirectory, "documents"), loggerFactory);
+        _service = new OllamaConversationService(fileDocumentService, settings, store, loggerFactory);
     }
 
     public void Dispose()
