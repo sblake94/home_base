@@ -3,21 +3,26 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
+using HomeBase.SharedLib.Logging;
 
 namespace HomeBase.Core.Settings;
 
 public sealed class CoreSettings
 {
+    private readonly ILogger<CoreSettings> _log;
     private const string SettingsFileName = "settings.json";
     private readonly Lock _fileLock = new();
     private readonly string _settingsFilePath;
     private readonly string _legacySettingsFilePath;
 
-    public CoreSettings(string? settingsFilePath = null, string? legacySettingsFilePath = null)
+    public CoreSettings(ILoggerFactory loggerFactory, string? settingsFilePath = null, string? legacySettingsFilePath = null)
     {
+        _log = loggerFactory.CreateLogger<CoreSettings>();
         _settingsFilePath = settingsFilePath ?? GetDefaultSettingsFilePath();
         _legacySettingsFilePath = legacySettingsFilePath ?? GetDefaultLegacySettingsFilePath();
         EnsureSettingsFileExists();
+        
+        _log.LogInfo($"CoreSettings initialized. Settings file path: {_settingsFilePath}"); 
     }
 
     public OllamaSettings GetOllamaSettings()

@@ -124,12 +124,15 @@ namespace HomeBase.ViewModels
 
             try
             {
+                string response = string.Empty;
                 await foreach (var token in _chatService.SubmitUserMessageAsync(text, _sendCancellation.Token).ConfigureAwait(false))
                 {
+                    response += token;
                     await Dispatcher.UIThread.InvokeAsync(() => assistantMessage.Text += token);
                 }
 
-                _log.LogInfo($"User message submitted: {text}");
+                _log.LogInfo($"USER:- {text}");
+                _log.LogInfo($"ASST:- {response}");
             }
             catch (OperationCanceledException)
             {

@@ -2,6 +2,7 @@ using HomeBase.Core.Chat;
 using HomeBase.Core.Data;
 using HomeBase.Core.Documents;
 using HomeBase.Core.Settings;
+using HomeBase.Core.Tools;
 using HomeBase.Service;
 using HomeBase.Service.Services;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -37,6 +38,8 @@ builder.Services.AddSingleton<IConversationService, OllamaConversationService>()
 
 
 var app = builder.Build();
+ToolBelt.DocumentService = app.Services.GetRequiredService<IDocumentService>();
+
 app.MapGrpcService<ChatGrpcService>();
 app.MapGrpcService<DocumentGrpcService>();
 app.MapGet("/", () => "HomeBase Core is running.");

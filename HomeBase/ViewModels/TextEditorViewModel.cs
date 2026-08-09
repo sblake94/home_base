@@ -19,13 +19,13 @@ public sealed class TextEditorViewModel : ViewModelBase
         _logger = loggerFactory.CreateLogger<TextEditorViewModel>();
         _documentService = documentService;
         var userName = Environment.UserName;
-        _currentlyLoadedFilePath = $"/home/{userName}/HomeBase/Documents/ExampleDocument.txt";
+        _currentlyLoadedFilePath = $"/home/{userName}/HomeBase/Documents/SecretDocument.txt";
 
         _logger.LogInfo($"TextEditorViewModel initialized. Current user: {userName}, default document path: {_currentlyLoadedFilePath}");
 
         _document = new TextDocument
         {
-            Text = "This is a sample text in the editor. You can edit this text and see the changes reflected in the Content property."
+            Text = _documentService.ReadAsync(_currentlyLoadedFilePath).GetAwaiter().GetResult()
         };
 
         _document.TextChanged += (sender, e) =>

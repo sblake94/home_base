@@ -21,6 +21,7 @@ public sealed class OllamaConversationService : IConversationService
     private readonly IDocumentService _fileDocumentService;
     private readonly ILogger<OllamaConversationService> _log;
 
+    private readonly ILoggerFactory _loggerFactory;
     public OllamaConversationService(
         IDocumentService fileDocumentService, 
         CoreSettings settings, 
@@ -30,7 +31,8 @@ public sealed class OllamaConversationService : IConversationService
         _fileDocumentService = fileDocumentService;
         _settings = settings;
         _store = store;
-        _log = loggerFactory.CreateLogger<OllamaConversationService>();
+        _loggerFactory = loggerFactory;
+        _log = _loggerFactory.CreateLogger<OllamaConversationService>();
     }
 
     public async IAsyncEnumerable<ChatStreamEvent> SendMessageAsync(
@@ -51,13 +53,18 @@ public sealed class OllamaConversationService : IConversationService
         }
 
         var state = _conversations.GetOrAdd(conversationId, _ => CreateConversation());
+        
         state.Tools.Clear();
         state.Tools.AddRange(
         [
-            new ListDocumentsTool(_fileDocumentService)
+            new GetWeatherTool(),
+            new ListDocumentNamesTool(),
+            new ReadDocumentTool()
         ]);
+        
         state.Chat.OnToolCall += HandleToolCall;
         state.Chat.OnToolResult += HandleToolResult;
+
         await state.SendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
 
         var messageId = Guid.NewGuid().ToString("N");
@@ -68,7 +75,19 @@ public sealed class OllamaConversationService : IConversationService
         var cancelled = false;
         Exception? failure = null;
 
-        var enumerator = state.Chat.SendAsync(content, state.Tools).GetAsyncEnumerator(cancellationToken);
+        foreach(var tool in state.Tools)
+        {
+            if (tool is not OllamaSharp.Models.Chat.Tool chatTool)
+            {
+                _log.LogWarning($"Tool {tool.GetType().Name} is not compatible with OllamaSharp.Models.Chat.Tool and will be skipped.");
+                continue;
+            }
+
+            _log.LogInfo($"{chatTool.Function?.Name ?? "UnKnown"}\t\t[purple]{chatTool.Function?.Description ?? "No description"}[/]");
+        }
+
+
+        var enumerator = state.Chat.SendAsync(content, state.Tools, null, null, cancellationToken).GetAsyncEnumerator(cancellationToken);
         try
         {
             yield return new AssistantStarted(messageId);
@@ -108,6 +127,8 @@ public sealed class OllamaConversationService : IConversationService
         finally
         {
             await enumerator.DisposeAsync().ConfigureAwait(false);
+            state.Chat.OnToolCall -= HandleToolCall;
+            state.Chat.OnToolResult -= HandleToolResult;
             state.SendLock.Release();
         }
 
@@ -152,20 +173,22 @@ public sealed class OllamaConversationService : IConversationService
         }
     }
 
+    private void HandleToolCall(object? sender, Message.ToolCall e)
+    {
+        
+    }
+
     private void HandleToolResult(object? sender, ToolResult e)
     {
         _log.LogInfo($"Tool result received: {e.Tool.GetType().Name} - {e.Result}");
-    }
-
-    private void HandleToolCall(object? sender, Message.ToolCall e)
-    {
-        _log.LogInfo($"Tool called: {e.Function.Name} - {e.Function.Arguments}");
     }
 
     private ConversationState CreateConversation()
     {
         var settings = _settings.GetOllamaSettings();
         var client = new OllamaApiClient(settings.Endpoint, settings.Model);
+        _log.LogInfo($"Created new Ollama conversation with endpoint {settings.Endpoint} and model {settings.Model}");
+        _log.LogInfo($"System prompt: {settings.SystemPrompt}");
         return new ConversationState(new OllamaChat(client, settings.SystemPrompt));
     }
 

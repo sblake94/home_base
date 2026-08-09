@@ -21,6 +21,7 @@ public class OllamaConversationServiceValidationTests : IDisposable
         var loggerFactory = new LoggerFactory();
         _tempDirectory = Path.Combine(Path.GetTempPath(), "homebase-conversation-tests-" + Guid.NewGuid().ToString("N"));
         var settings = new CoreSettings(
+            loggerFactory,
             Path.Combine(_tempDirectory, "settings.json"),
             Path.Combine(_tempDirectory, "legacy", "local_settings.json"));
         var store = new SqliteConversationStore(Path.Combine(_tempDirectory, "homebase.db"));
