@@ -6,24 +6,9 @@ using OllamaSharp.Tools;
 
 namespace HomeBase.Core.Tools;
 
-public class ToolBelt
+public static class DocumentTools
 {
-    public static IDocumentService? DocumentService;
-
-    /// <summary>
-	/// Get the current weather for a city
-	/// </summary>
-	/// <param name="city">Name of the city</param>
-	/// <param name="unit">Temperature unit for the weather</param>
-	[OllamaTool]
-	public static string GetWeather(string city, Unit unit = Unit.Celsius) => $"It's cold at only 6° {unit} in {city}.";
-
-    public enum Unit
-    {
-        Celsius,
-        Fahrenheit
-    }
-
+    public static IDocumentService? DocumentService { get; set; }
 
     /// <summary>
     /// Lists the names of all the documents available in the document service.

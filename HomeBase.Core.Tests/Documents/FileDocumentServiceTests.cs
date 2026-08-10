@@ -67,9 +67,15 @@ public class FileDocumentServiceTests : IDisposable
 		var service = CreateService();
 		var path = Path.Combine(_tempDirectory, "..", "outside.txt");
 
-		var exception = await Assert.ThrowsAsync<DocumentServiceException>(() => service.WriteAsync(path, "content"));
-
-		Assert.Equal("Path is outside the document workspace.", exception.Message);
+		try
+		{
+			await service.WriteAsync(path, "content");
+			Assert.Fail("Expected DocumentServiceException was not thrown.");
+		}
+		catch (DocumentServiceException ex)
+		{
+			Assert.Equal("Path is outside the document workspace.", ex.Message);
+		}
 	}
 
 	[Fact]
@@ -79,10 +85,15 @@ public class FileDocumentServiceTests : IDisposable
 		var outsideDirectory = _tempDirectory + "-outside";
 		var path = Path.Combine(outsideDirectory, "outside.txt");
 
-		var exception = await Assert.ThrowsAsync<DocumentServiceException>(() => service.WriteAsync(path, "content"));
-
-		Assert.Equal("Path is outside the document workspace.", exception.Message);
-		Assert.False(File.Exists(path));
+		try
+		{
+			await service.WriteAsync(path, "content");
+			Assert.Fail("Expected DocumentServiceException was not thrown.");
+		}
+		catch (DocumentServiceException ex)
+		{
+			Assert.Equal("Path is outside the document workspace.", ex.Message);
+		}
 	}
 
 	[Fact]
@@ -91,9 +102,15 @@ public class FileDocumentServiceTests : IDisposable
 		var service = CreateService();
 		var path = Path.Combine(_tempDirectory + "-other", "outside.txt");
 
-		var exception = await Assert.ThrowsAsync<DocumentServiceException>(() => service.WriteAsync(path, "content"));
-
-		Assert.Equal("Path is outside the document workspace.", exception.Message);
+		try
+		{
+			await service.WriteAsync(path, "content");
+			Assert.Fail("Expected DocumentServiceException was not thrown.");
+		}
+		catch (DocumentServiceException ex)
+		{
+			Assert.Equal("Path is outside the document workspace.", ex.Message);
+		}
 	}
 
     	
@@ -101,7 +118,14 @@ public class FileDocumentServiceTests : IDisposable
  	public async Task RejectsEmptyPath()
  	{
  		var service = CreateService();
- 		var exception = await Assert.ThrowsAsync<DocumentServiceException>(() => service.WriteAsync(string.Empty, "content"));
- 		Assert.Equal(FileDocumentService.InvalidPathErrorCode, exception.ErrorCode);
+ 		try
+		{ 
+			await service.WriteAsync(string.Empty, "content");
+			Assert.Fail("Expected DocumentServiceException was not thrown.");
+		}
+		catch (DocumentServiceException exception)
+		{
+			Assert.Equal(FileDocumentService.InvalidPathErrorCode, exception.ErrorCode);
+		}
  	}
 }

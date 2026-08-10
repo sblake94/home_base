@@ -19,6 +19,7 @@ public sealed class OllamaConversationService : IConversationService
     private readonly IConversationStore _store;
     private readonly ConcurrentDictionary<string, ConversationState> _conversations = new();
     private readonly IDocumentService _fileDocumentService;
+    private readonly HttpClient? _httpClient;
     private readonly ILogger<OllamaConversationService> _log;
 
     private readonly ILoggerFactory _loggerFactory;
@@ -26,13 +27,19 @@ public sealed class OllamaConversationService : IConversationService
         IDocumentService fileDocumentService, 
         CoreSettings settings, 
         IConversationStore store,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory,
+        HttpClient? httpClient = null)
     {
         _fileDocumentService = fileDocumentService;
         _settings = settings;
         _store = store;
         _loggerFactory = loggerFactory;
         _log = _loggerFactory.CreateLogger<OllamaConversationService>();
+        
+        if(httpClient is not null)
+        {
+            _httpClient = httpClient;
+        }
     }
 
     public async IAsyncEnumerable<ChatStreamEvent> SendMessageAsync(
@@ -57,7 +64,6 @@ public sealed class OllamaConversationService : IConversationService
         state.Tools.Clear();
         state.Tools.AddRange(
         [
-            new GetWeatherTool(),
             new ListDocumentNamesTool(),
             new ReadDocumentTool()
         ]);
@@ -77,9 +83,9 @@ public sealed class OllamaConversationService : IConversationService
 
         foreach(var tool in state.Tools)
         {
-            if (tool is not OllamaSharp.Models.Chat.Tool chatTool)
+            if (tool is not Tool chatTool)
             {
-                _log.LogWarning($"Tool {tool.GetType().Name} is not compatible with OllamaSharp.Models.Chat.Tool and will be skipped.");
+                _log.LogWarning($"Tool {tool.GetType().Name} is not compatible with {nameof(Tool)} and will be skipped.");
                 continue;
             }
 
@@ -186,9 +192,22 @@ public sealed class OllamaConversationService : IConversationService
     private ConversationState CreateConversation()
     {
         var settings = _settings.GetOllamaSettings();
-        var client = new OllamaApiClient(settings.Endpoint, settings.Model);
+
+        IOllamaApiClient client;
+        
+        if (_httpClient != null)
+        {   
+            // Use the provided HttpClient for testing purposes
+            client = new OllamaApiClient(_httpClient, settings.Model);
+        }
+        else
+        {
+            client = new OllamaApiClient(settings.Endpoint, settings.Model);
+        }
+
         _log.LogInfo($"Created new Ollama conversation with endpoint {settings.Endpoint} and model {settings.Model}");
         _log.LogInfo($"System prompt: {settings.SystemPrompt}");
+        
         return new ConversationState(new OllamaChat(client, settings.SystemPrompt));
     }
 

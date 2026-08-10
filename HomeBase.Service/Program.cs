@@ -38,7 +38,7 @@ builder.Services.AddSingleton<IConversationService, OllamaConversationService>()
 
 
 var app = builder.Build();
-ToolBelt.DocumentService = app.Services.GetRequiredService<IDocumentService>();
+DocumentTools.DocumentService = app.Services.GetRequiredService<IDocumentService>();
 
 app.MapGrpcService<ChatGrpcService>();
 app.MapGrpcService<DocumentGrpcService>();
