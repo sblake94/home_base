@@ -18,12 +18,12 @@ using Moq.Protected;
 
 namespace HomeBase.Core.Tests.Chat;
 
-public class OllamaConversationServiceTests : IDisposable
+public class LocalHostConversationServiceTests : IDisposable
 {
     private readonly string _tempDirectory;
-    private readonly OllamaConversationService _service;
+    private readonly LocalHostConversationService _service;
 
-    public OllamaConversationServiceTests()
+    public LocalHostConversationServiceTests()
     {
         var loggerFactory = new LoggerFactory();
         _tempDirectory = Path.Combine(Path.GetTempPath(), "homebase-conversation-tests-" + Guid.NewGuid().ToString("N"));
@@ -33,7 +33,7 @@ public class OllamaConversationServiceTests : IDisposable
             Path.Combine(_tempDirectory, "legacy", "local_settings.json"));
         var store = new SqliteConversationStore(Path.Combine(_tempDirectory, "homebase.db"));
         var fileDocumentService = new FileDocumentService(Path.Combine(_tempDirectory, "documents"), loggerFactory);
-        _service = new OllamaConversationService(fileDocumentService, settings, store, loggerFactory);
+        _service = new LocalHostConversationService(fileDocumentService, settings, store, loggerFactory);
     }
 
     public void Dispose()
@@ -109,7 +109,7 @@ public class OllamaConversationServiceTests : IDisposable
             Path.Combine(_tempDirectory, "legacy", "local_settings.json"));
         var store = new SqliteConversationStore(Path.Combine(_tempDirectory, "homebase-http.db"));
         var fileDocumentService = new FileDocumentService(Path.Combine(_tempDirectory, "documents-http"), loggerFactory);
-        var service = new OllamaConversationService(fileDocumentService, settings, store, loggerFactory, httpClient);
+        var service = new LocalHostConversationService(fileDocumentService, settings, store, loggerFactory, httpClient);
 
         // Act
         _ = await CollectAsync(service.SendMessageAsync("conversation-1", "hello"));
@@ -245,7 +245,7 @@ public class OllamaConversationServiceTests : IDisposable
             Path.Combine(_tempDirectory, "legacy", "local_settings.json"));
         var store = new SqliteConversationStore(Path.Combine(_tempDirectory, "homebase-tool-output.db"));
         var fileDocumentService = new FileDocumentService(documentRoot, loggerFactory);
-        var service = new OllamaConversationService(fileDocumentService, settings, store, loggerFactory, httpClient);
+        var service = new LocalHostConversationService(fileDocumentService, settings, store, loggerFactory, httpClient);
 
         var previousDocumentService = DocumentTools.DocumentService;
         DocumentTools.DocumentService = fileDocumentService;

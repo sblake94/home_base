@@ -13,17 +13,17 @@ using OllamaChat = OllamaSharp.Chat;
 
 namespace HomeBase.Core.Chat;
 
-public sealed class OllamaConversationService : IConversationService
+public sealed class LocalHostConversationService : IConversationService
 {
     private readonly CoreSettings _settings;
     private readonly IConversationStore _store;
     private readonly ConcurrentDictionary<string, ConversationState> _conversations = new();
     private readonly IDocumentService _fileDocumentService;
     private readonly HttpClient? _httpClient;
-    private readonly ILogger<OllamaConversationService> _log;
+    private readonly ILogger<LocalHostConversationService> _log;
 
     private readonly ILoggerFactory _loggerFactory;
-    public OllamaConversationService(
+    public LocalHostConversationService(
         IDocumentService fileDocumentService, 
         CoreSettings settings, 
         IConversationStore store,
@@ -34,7 +34,7 @@ public sealed class OllamaConversationService : IConversationService
         _settings = settings;
         _store = store;
         _loggerFactory = loggerFactory;
-        _log = _loggerFactory.CreateLogger<OllamaConversationService>();
+        _log = _loggerFactory.CreateLogger<LocalHostConversationService>();
         
         if(httpClient is not null)
         {

@@ -34,7 +34,7 @@ builder.Services.AddSingleton<IDocumentService>(
 builder.Services.AddGrpc();
 builder.Services.AddSingleton<CoreSettings>();
 builder.Services.AddSingleton<IConversationStore, SqliteConversationStore>();
-builder.Services.AddSingleton<IConversationService, OllamaConversationService>();
+builder.Services.AddSingleton<IConversationService, LocalHostConversationService>();
 
 
 var app = builder.Build();
