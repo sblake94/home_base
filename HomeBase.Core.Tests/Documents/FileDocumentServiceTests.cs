@@ -1,5 +1,6 @@
 using HomeBase.Core.Documents;
 using HomeBase.SharedLib.Logging;
+using Moq;
 
 namespace HomeBase.Core.Tests.Documents;
 
@@ -21,7 +22,7 @@ public class FileDocumentServiceTests : IDisposable
 		}
 	}
 
-	private FileDocumentService CreateService() => new(_tempDirectory, new LoggerFactory());
+	private FileDocumentService CreateService() => new(_tempDirectory, new Mock<ICustomLoggerFactory>().Object);
 
 	[Fact]
 	public async Task WritesAndReadsDocumentContent()

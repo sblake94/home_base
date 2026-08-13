@@ -17,7 +17,7 @@ namespace HomeBase.ViewModels
     {
         private readonly IChatService _chatService;
         private readonly IBackendStatusService _backendStatusService;
-        private readonly ILogger<ChatViewModel> _log;
+        private readonly ICustomLogger<ChatViewModel> _log;
         private readonly RelayCommand _sendMessageCommand;
         private readonly RelayCommand _cancelSendCommand;
         private CancellationTokenSource? _sendCancellation;
@@ -75,11 +75,11 @@ namespace HomeBase.ViewModels
         public ICommand SendMessageCommand => _sendMessageCommand;
         public ICommand CancelSendCommand => _cancelSendCommand;
 
-        public ChatViewModel(IChatService chatService, IBackendStatusService backendStatusService, ILoggerFactory loggerFactory)
+        public ChatViewModel(IChatService chatService, IBackendStatusService backendStatusService, ICustomLoggerFactory loggerFactory)
         {
             _chatService = chatService;
             _backendStatusService = backendStatusService;
-            _log = loggerFactory.CreateLogger<ChatViewModel>();
+            _log = loggerFactory.CreateLogger<ChatViewModel, FileLogger<ChatViewModel>>();
             _sendMessageCommand = new RelayCommand(async _ => await SendMessage(), _ => IsBackendAvailable && !IsSending && !string.IsNullOrWhiteSpace(InputText));
             _cancelSendCommand = new RelayCommand(_ =>
             {

@@ -3,17 +3,17 @@ namespace HomeBase.Core.Documents;
 
 public sealed class FileDocumentService : IDocumentService
 {
-    private readonly ILogger<FileDocumentService> _logger;
+    private readonly ICustomLogger<FileDocumentService> _logger;
     public static readonly string InvalidPathErrorCode = "INVALID_PATH";
     public static readonly string PathOutsideWorkspaceErrorCode = "PATH_OUTSIDE_WORKSPACE";
     private readonly string _rootDirectory;
 
 
-    public FileDocumentService(string rootDirectory, ILoggerFactory loggerFactory)
+    public FileDocumentService(string rootDirectory, ICustomLoggerFactory loggerFactory)
     {
         _rootDirectory = Path.GetFullPath(rootDirectory);
         Directory.CreateDirectory(_rootDirectory);
-        _logger = loggerFactory.CreateLogger<FileDocumentService>();
+        _logger = loggerFactory.CreateLogger<FileDocumentService, FileLogger<FileDocumentService>>();
     }
 
     private string ResolvePath(string path)

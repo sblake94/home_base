@@ -5,6 +5,7 @@ using HomeBase.Core.Settings;
 using HomeBase.Core.Tools;
 using HomeBase.Service;
 using HomeBase.Service.Services;
+using HomeBase.SharedLib.Logging;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var socketPath = CoreSocketPath.Get();
@@ -16,26 +17,26 @@ builder.WebHost.ConfigureKestrel(options =>
 	options.ListenUnixSocket(socketPath, listenOptions => listenOptions.Protocols = HttpProtocols.Http2);
 });
 
+var workspacePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "HomeBase");
 
 var documentWorkspace =
     Environment.GetEnvironmentVariable("HOMEBASE_DOCUMENT_WORKSPACE")
-    ?? Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-        "HomeBase",
-        "Documents");
+    ?? Path.Combine(workspacePath, "Documents");
 
-builder.Services.AddSingleton<HomeBase.SharedLib.Logging.ILoggerFactory, HomeBase.SharedLib.Logging.LoggerFactory>();
-builder.Services.AddSingleton<IDocumentService>(
-    sp => new FileDocumentService(
-        documentWorkspace,
-        sp.GetRequiredService<HomeBase.SharedLib.Logging.ILoggerFactory>()));
-
+builder.Services.AddSingleton<CoreSettings>(sp => new CoreSettings(sp.GetRequiredService<ICustomLoggerFactory>()));
+builder.Services.AddSingleton<ICustomLoggerFactory, CustomLoggerFactory>(sp => new CustomLoggerFactory(Path.Combine(workspacePath, "logs", "service"), nameof(HomeBase.Service)));
+builder.Services.AddSingleton<IDocumentService>(sp => new FileDocumentService(
+                                                            documentWorkspace,
+                                                            sp.GetRequiredService<ICustomLoggerFactory>()));
 
 builder.Services.AddGrpc();
-builder.Services.AddSingleton<CoreSettings>();
 builder.Services.AddSingleton<IConversationStore, SqliteConversationStore>();
 builder.Services.AddSingleton<IConversationService, LocalHostConversationService>();
-
+builder.Services.AddSingleton(sp => new CoreSettings(sp.GetRequiredService<ICustomLoggerFactory>()));
+builder.Services.AddSingleton(sp => new HttpClient
+{
+    BaseAddress = new Uri(sp.GetRequiredService<CoreSettings>().GetOllamaSettings().Endpoint),
+});
 
 var app = builder.Build();
 DocumentTools.DocumentService = app.Services.GetRequiredService<IDocumentService>();

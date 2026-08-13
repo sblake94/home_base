@@ -1,23 +1,22 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <ProjectReference Include="..\HomeBase.Contracts\HomeBase.Contracts.csproj" />
-    <ProjectReference Include="..\HomeBase.SharedLib\HomeBase.SharedLib.csproj" />
+    <ProjectReference Include="..\HomeBase.Contracts\HomeBase.Contracts.csproj"/>
+    <ProjectReference Include="..\HomeBase.SharedLib\HomeBase.SharedLib.csproj"/>
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="5.6.0" />
-    <PackageReference Include="OllamaSharp" Version="5.4.30" />
-    <PackageReference Include="Microsoft.SemanticKernel" Version="1.79.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="5.6.0"/>
+    <PackageReference Include="OllamaSharp" Version="5.4.30"/>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.10"/>
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.79.0"/>
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.79.0-alpha"/>
+    <PackageReference Include="Microsoft.Agents.AI" Version="1.17.0"/>
+    
   </ItemGroup>
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(GenerateDocumentationFile)' == ''">
     <GenerateDocumentationFile Condition="'$(DocumentationFile)' == ''">false</GenerateDocumentationFile>
     <GenerateDocumentationFile Condition="'$(DocumentationFile)' != ''">true</GenerateDocumentationFile>

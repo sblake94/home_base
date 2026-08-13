@@ -55,7 +55,7 @@ public sealed class ChatGrpcService : ChatApi.ChatApiBase
             },
             CoreAssistantToken token => new ChatEvent
             {
-                AssistantToken = new HomeBase.Contracts.Chat.V1.AssistantToken { Text = token.Text }
+                AssistantToken = new HomeBase.Contracts.Chat.V1.AssistantToken { Text = token.Text ?? string.Empty }
             },
             CoreAssistantCompleted completed => new ChatEvent
             {

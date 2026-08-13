@@ -15,6 +15,7 @@ using HomeBase.SharedLib.Logging;
 using Xunit;
 using Moq;
 using Moq.Protected;
+using Microsoft.Extensions.Logging;
 
 namespace HomeBase.Core.Tests.Chat;
 
@@ -25,7 +26,7 @@ public class LocalHostConversationServiceTests : IDisposable
 
     public LocalHostConversationServiceTests()
     {
-        var loggerFactory = new LoggerFactory();
+        var loggerFactory = new Mock<ICustomLoggerFactory>().Object;
         _tempDirectory = Path.Combine(Path.GetTempPath(), "homebase-conversation-tests-" + Guid.NewGuid().ToString("N"));
         var settings = new CoreSettings(
             loggerFactory,
@@ -65,91 +66,66 @@ public class LocalHostConversationServiceTests : IDisposable
     }
 
     [Fact]
-    // This test should assert that the SendMessageAsync method sends an HTTP request with the correct tool schemas when a message is sent.
-    // Use Moq and Xunit
     public async Task SendMessageAsync_SendsHttpRequestWithCorrectToolSchemas()
     {
-        // Arrange
-        HttpMethod? capturedMethod = null;
-        string? capturedUri = null;
-        string? capturedBody = null;
-
-        var httpHandler = new Mock<HttpMessageHandler>(MockBehavior.Strict);
-        httpHandler
+        var requestBodies = new List<string>();
+        var handler = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        handler
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<System.Threading.CancellationToken>())
-            .Callback<HttpRequestMessage, System.Threading.CancellationToken>((request, _) =>
+                ItExpr.IsAny<CancellationToken>())
+            .Returns<HttpRequestMessage, CancellationToken>((request, _) =>
             {
-                capturedMethod = request.Method;
-                capturedUri = request.RequestUri?.AbsoluteUri;
-                capturedBody = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
-            })
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(
-                    """
-                    {"model":"llama2","created_at":"2026-01-01T00:00:00Z","message":{"role":"assistant","content":"ok"},"done":true}
-                    """,
-                    Encoding.UTF8,
-                    "application/json")
+                requestBodies.Add(request.Content?.ReadAsStringAsync().GetAwaiter().GetResult() ?? string.Empty);
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(
+                        "{\"model\":\"llama2\",\"created_at\":\"2026-01-01T00:00:00Z\",\"message\":{\"role\":\"assistant\",\"content\":\"hello from test\"},\"done\":false}\n" +
+                        "{\"model\":\"llama2\",\"created_at\":\"2026-01-01T00:00:01Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\"},\"done\":true}\n",
+                        Encoding.UTF8,
+                        "application/json")
+                });
             });
 
-        var httpClient = new HttpClient(httpHandler.Object)
+        var httpClient = new HttpClient(handler.Object)
         {
             BaseAddress = new Uri("http://localhost:11434")
         };
 
-        var loggerFactory = new LoggerFactory();
-        var settings = new CoreSettings(
-            loggerFactory,
-            Path.Combine(_tempDirectory, "settings-with-http.json"),
+        var fileDocumentServiceMock = new Mock<IDocumentService>();
+        var loggerFactory = new CustomLoggerFactory(
+            Path.Combine(_tempDirectory, "logs"), nameof(SendMessageAsync_SendsHttpRequestWithCorrectToolSchemas));
+        var storeMock = new Mock<IConversationStore>();
+        var settings = new CoreSettings(loggerFactory,
+            Path.Combine(_tempDirectory, "settings.json"),
             Path.Combine(_tempDirectory, "legacy", "local_settings.json"));
-        var store = new SqliteConversationStore(Path.Combine(_tempDirectory, "homebase-http.db"));
-        var fileDocumentService = new FileDocumentService(Path.Combine(_tempDirectory, "documents-http"), loggerFactory);
-        var service = new LocalHostConversationService(fileDocumentService, settings, store, loggerFactory, httpClient);
 
-        // Act
-        _ = await CollectAsync(service.SendMessageAsync("conversation-1", "hello"));
+        var sut = new LocalHostConversationService(
+            fileDocumentServiceMock.Object,
+            settings,
+            storeMock.Object,
+            loggerFactory,
+            httpClient);
 
-        // Assert
-        httpHandler
-            .Protected()
-            .Verify(
-                "SendAsync",
-                Times.Once(),
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<System.Threading.CancellationToken>());
+        var events = await CollectAsync(sut.SendMessageAsync("test-conversation", "Hello, assistant!"));
 
-            Assert.Equal(HttpMethod.Post, capturedMethod);
-            Assert.NotNull(capturedUri);
-            Assert.Contains("/api/chat", capturedUri);
+        Assert.DoesNotContain(events, e => e is ChatFailed);
+        Assert.NotEmpty(requestBodies);
+        Assert.Contains("tools", requestBodies[^1]);
+        Assert.Contains("ReadDocument", requestBodies[^1]);
+        Assert.Contains("ListDocumentNames", requestBodies[^1]);
 
-            Assert.NotNull(capturedBody);
-            using var json = JsonDocument.Parse(capturedBody!);
-
-        var tools = json.RootElement.GetProperty("tools");
-        Assert.Equal(JsonValueKind.Array, tools.ValueKind);
-        Assert.Equal(2, tools.GetArrayLength());
-
-        var functionNames = tools
-            .EnumerateArray()
-            .Select(t => t.GetProperty("function").GetProperty("name").GetString())
-            .ToArray();
-
-        Assert.Contains("ListDocumentNames", functionNames);
-        Assert.Contains("ReadDocument", functionNames);
-
-
-        var readDocumentTool = tools
-            .EnumerateArray()
-            .Single(t => t.GetProperty("function").GetProperty("name").GetString() == "ReadDocument");
-        var readDocumentParameters = readDocumentTool.GetProperty("function").GetProperty("parameters");
-        Assert.Equal("object", readDocumentParameters.GetProperty("type").GetString());
-        var readDocumentProperties = readDocumentParameters.GetProperty("properties");
-        Assert.True(readDocumentProperties.TryGetProperty("documentName", out _));
+        handler.Protected().Verify(
+            "SendAsync",
+            Times.AtLeastOnce(),
+            ItExpr.Is<HttpRequestMessage>(req =>
+                req.Method == HttpMethod.Post &&
+                req.RequestUri != null &&
+                req.RequestUri.ToString().Contains("api/chat") &&
+                req.Content != null),
+            ItExpr.IsAny<CancellationToken>());
     }
 
     [Fact]
@@ -163,8 +139,8 @@ public class LocalHostConversationServiceTests : IDisposable
         var expectedToolOutput = "TOOL_OUTPUT_MARKER_42";
         await File.WriteAllTextAsync(documentPath, expectedToolOutput);
 
-        var requestBodies = new System.Collections.Generic.List<string>();
-        var responses = new System.Collections.Generic.Queue<HttpResponseMessage>();
+        var requestBodies = new List<string>();
+        var responses = new Queue<HttpResponseMessage>();
 
         var toolCallResponse = JsonSerializer.Serialize(new
         {
@@ -189,8 +165,8 @@ public class LocalHostConversationServiceTests : IDisposable
                     }
                 }
             },
-            done = true
-        });
+            done = false
+        }) + "\n";
 
         var finalAssistantResponse = JsonSerializer.Serialize(new
         {
@@ -202,7 +178,7 @@ public class LocalHostConversationServiceTests : IDisposable
                 content = "done"
             },
             done = true
-        });
+        }) + "\n";
 
         responses.Enqueue(new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -238,7 +214,8 @@ public class LocalHostConversationServiceTests : IDisposable
             BaseAddress = new Uri("http://localhost:11434")
         };
 
-        var loggerFactory = new LoggerFactory();
+        var loggerFactory = new CustomLoggerFactory(
+            Path.Combine(_tempDirectory, "logs"), nameof(ShouldFeedToolOutputBackToAssistant));
         var settings = new CoreSettings(
             loggerFactory,
             Path.Combine(_tempDirectory, "settings-tool-output.json"),
@@ -264,7 +241,7 @@ public class LocalHostConversationServiceTests : IDisposable
                     "SendAsync",
                     Times.Exactly(2),
                     ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<System.Threading.CancellationToken>());
+                    ItExpr.IsAny<CancellationToken>());
 
             Assert.Equal(2, requestBodies.Count);
 

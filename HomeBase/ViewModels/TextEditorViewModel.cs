@@ -11,12 +11,12 @@ namespace HomeBase.ViewModels;
 public sealed class TextEditorViewModel : ViewModelBase
 {
     private readonly IDocumentService _documentService;
-    private readonly ILogger<TextEditorViewModel> _logger;
+    private readonly ICustomLogger<TextEditorViewModel> _logger;
     private string _currentlyLoadedFilePath = string.Empty;
 
-    public TextEditorViewModel(IDocumentService documentService, ILoggerFactory loggerFactory)
+    public TextEditorViewModel(IDocumentService documentService, ICustomLoggerFactory loggerFactory)
     {
-        _logger = loggerFactory.CreateLogger<TextEditorViewModel>();
+        _logger = loggerFactory.CreateLogger<TextEditorViewModel, FileLogger<TextEditorViewModel>>();
         _documentService = documentService;
         var userName = Environment.UserName;
         _currentlyLoadedFilePath = $"/home/{userName}/HomeBase/Documents/SecretDocument.txt";

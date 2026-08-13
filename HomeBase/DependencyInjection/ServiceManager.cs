@@ -1,5 +1,6 @@
 
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using HomeBase.Services;
 using HomeBase.Services.ChatService;
@@ -7,6 +8,7 @@ using HomeBase.Services.DocumentService;
 using HomeBase.SharedLib.Logging;
 using HomeBase.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace HomeBase.DependencyInjection;
 
@@ -46,7 +48,10 @@ public static class ServiceManager
 		services.AddSingleton<IDocumentService>(sp => sp.GetRequiredService<DocumentService>());
 		services.AddSingleton<IBackendStatusService>(sp => sp.GetRequiredService<CoreChatService>());
 
-        services.AddSingleton<ILoggerFactory, LoggerFactory>();
+        services.AddSingleton<ICustomLoggerFactory, CustomLoggerFactory>(sp => new CustomLoggerFactory(
+			Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "HomeBase", "logs", "client"),
+			"Client"));
+		services.AddSingleton<ILoggerFactory>(sp => sp.GetRequiredService<ICustomLoggerFactory>());
 	}
 }
 
