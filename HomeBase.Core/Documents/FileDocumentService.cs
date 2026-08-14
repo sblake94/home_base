@@ -3,8 +3,9 @@ namespace HomeBase.Core.Documents;
 
 public sealed class FileDocumentService : IDocumentService
 {
-    private readonly ICustomLogger<FileDocumentService> _logger;
+    private readonly ICustomLogger<FileDocumentService> _log;
     public static readonly string InvalidPathErrorCode = "INVALID_PATH";
+    public static readonly string PathNotFullyQualifiedErrorCode = "PATH_NOT_FULLY_QUALIFIED";
     public static readonly string PathOutsideWorkspaceErrorCode = "PATH_OUTSIDE_WORKSPACE";
     private readonly string _rootDirectory;
 
@@ -13,7 +14,7 @@ public sealed class FileDocumentService : IDocumentService
     {
         _rootDirectory = Path.GetFullPath(rootDirectory);
         Directory.CreateDirectory(_rootDirectory);
-        _logger = loggerFactory.CreateLogger<FileDocumentService, FileLogger<FileDocumentService>>();
+        _log = loggerFactory.CreateLogger<FileDocumentService, FileLogger<FileDocumentService>>();
     }
 
     private string ResolvePath(string path)
@@ -25,7 +26,7 @@ public sealed class FileDocumentService : IDocumentService
 
         if(!Path.IsPathFullyQualified(path))
         {
-            throw new DocumentServiceException(InvalidPathErrorCode, "Path must be fully qualified.");
+            throw new DocumentServiceException(PathNotFullyQualifiedErrorCode, "Path must be fully qualified.");
         }
 
         // Ensure both the requested path and root are fully resolved lexically
@@ -38,7 +39,7 @@ public sealed class FileDocumentService : IDocumentService
             relativePath.StartsWith($"..{Path.DirectorySeparatorChar}") ||
             Path.IsPathRooted(relativePath))
         {
-            _logger.LogWarning($"Attempted access to path outside workspace: {fullPath}");
+            _log.LogWarning($"Attempted access to path outside workspace: {fullPath}");
             throw new DocumentServiceException(PathOutsideWorkspaceErrorCode, "Path is outside the document workspace.");
         }
 
@@ -79,11 +80,34 @@ public sealed class FileDocumentService : IDocumentService
 
     public Task<string> ReadAsync(string path, CancellationToken cancellationToken = default)
     {
-        return File.ReadAllTextAsync(ResolvePath(path), cancellationToken);
+        var resolvedPath = ResolveReadPath(path);
+
+        var directory = Path.GetDirectoryName(resolvedPath);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            throw new DocumentServiceException(InvalidPathErrorCode, "Directory does not exist.");
+        }
+        _log.LogInfo($"Reading document at path: {path}");
+        return File.ReadAllTextAsync(resolvedPath, cancellationToken);
+    }
+
+    // Relative paths are treated as relative to the root directory, then re-validated through
+    // ResolvePath's sandbox checks so a value like "../../etc/passwd" can't escape the root.
+    private string ResolveReadPath(string path)
+    {
+        try
+        {
+            return ResolvePath(path);
+        }
+        catch (DocumentServiceException ex) when (ex.ErrorCode == PathNotFullyQualifiedErrorCode)
+        {
+            return ResolvePath(Path.Combine(_rootDirectory, path));
+        }
     }
 
     public Task WriteAsync(string path, string content, CancellationToken cancellationToken = default)
     {
+        _log.LogInfo($"Writing document at path: {path}");
         var resolvedPath = ResolvePath(path);
         var directory = Path.GetDirectoryName(resolvedPath);
         if (!string.IsNullOrEmpty(directory))
@@ -95,6 +119,7 @@ public sealed class FileDocumentService : IDocumentService
 
     public List<string> ListDocuments()
     {
+        _log.LogInfo($"Listing documents in root directory: {_rootDirectory}");
         var documents = new List<string>();
         foreach (var file in Directory.EnumerateFiles(_rootDirectory, "*", SearchOption.AllDirectories))
         {
