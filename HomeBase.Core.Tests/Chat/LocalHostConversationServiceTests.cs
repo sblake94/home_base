@@ -23,7 +23,6 @@ namespace HomeBase.Core.Tests.Chat;
 public class LocalHostConversationServiceTests : IDisposable
 {
     private readonly string _tempDirectory;
-    private readonly IServiceCollection _serviceCollection;
 
     public LocalHostConversationServiceTests()
     {
@@ -55,7 +54,9 @@ public class LocalHostConversationServiceTests : IDisposable
                 Path.Combine(_tempDirectory, "legacy", "local_settings.json")),
             new SqliteConversationStore(Path.Combine(_tempDirectory, "homebase.db")),
             new Mock<ICustomLoggerFactory>().Object,
-            new ServiceCollection().BuildServiceProvider());
+            new ServiceCollection()
+                .AddSingleton(new HttpClient())
+                .BuildServiceProvider());
         var events = await CollectAsync(sut.SendMessageAsync(string.Empty, "hello"));
 
         var failure = Assert.Single(events);
@@ -73,7 +74,9 @@ public class LocalHostConversationServiceTests : IDisposable
                 Path.Combine(_tempDirectory, "legacy", "local_settings.json")),
             new SqliteConversationStore(Path.Combine(_tempDirectory, "homebase.db")),
             new Mock<ICustomLoggerFactory>().Object,
-            new ServiceCollection().BuildServiceProvider());
+            new ServiceCollection()
+                .AddSingleton(new HttpClient())
+                .BuildServiceProvider());
         var events = await CollectAsync(sut.SendMessageAsync("conversation-1", "   "));
 
         var failure = Assert.Single(events);
