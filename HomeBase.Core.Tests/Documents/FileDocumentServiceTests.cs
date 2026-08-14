@@ -22,12 +22,20 @@ public class FileDocumentServiceTests : IDisposable
 		}
 	}
 
-	private FileDocumentService CreateService() => new(_tempDirectory, new Mock<ICustomLoggerFactory>().Object);
+	private FileDocumentService CreateSut()
+	{
+		var loggerFactory = new Mock<ICustomLoggerFactory>();
+		var logger = new Mock<ICustomLogger<FileDocumentService>>();
+		loggerFactory.Setup(f => f.CreateLogger<FileDocumentService, FileLogger<FileDocumentService>>())
+			.Returns(logger.Object);
+
+		return new(_tempDirectory, loggerFactory.Object);
+	}
 
 	[Fact]
 	public async Task WritesAndReadsDocumentContent()
 	{
-		var service = CreateService();
+		var service = CreateSut();
 		var path = Path.Combine(_tempDirectory, "document.txt");
 		const string content = "First line\nSecond line";
 
@@ -41,7 +49,7 @@ public class FileDocumentServiceTests : IDisposable
 	[Fact]
 	public async Task ThrowsWhenReadingMissingFile()
 	{
-		var service = CreateService();
+		var service = CreateSut();
 		var path = Path.Combine(_tempDirectory, "missing.txt");
 
 		var exception = await Assert.ThrowsAsync<FileNotFoundException>(() => service.ReadAsync(path));
@@ -52,7 +60,7 @@ public class FileDocumentServiceTests : IDisposable
 	[Fact]
 	public async Task WritesNewFile()
 	{
-		var service = CreateService();
+		var service = CreateSut();
 		var path = Path.Combine(_tempDirectory, "new-document.txt");
 		const string content = "New document";
 
@@ -65,7 +73,7 @@ public class FileDocumentServiceTests : IDisposable
 	[Fact]
 	public async Task RejectsRelativeTraversalOutsideWorkspace()
 	{
-		var service = CreateService();
+		var service = CreateSut();
 		var path = Path.Combine(_tempDirectory, "..", "outside.txt");
 
 		try
@@ -82,7 +90,7 @@ public class FileDocumentServiceTests : IDisposable
 	[Fact]
 	public async Task RejectsAbsolutePathOutsideWorkspace()
 	{
-		var service = CreateService();
+		var service = CreateSut();
 		var outsideDirectory = _tempDirectory + "-outside";
 		var path = Path.Combine(outsideDirectory, "outside.txt");
 
@@ -100,7 +108,7 @@ public class FileDocumentServiceTests : IDisposable
 	[Fact]
 	public async Task RejectsPathWithSimilarDirectoryPrefix()
 	{
-		var service = CreateService();
+		var service = CreateSut();
 		var path = Path.Combine(_tempDirectory + "-other", "outside.txt");
 
 		try
@@ -118,7 +126,7 @@ public class FileDocumentServiceTests : IDisposable
  	[Fact]
  	public async Task RejectsEmptyPath()
  	{
- 		var service = CreateService();
+ 		var service = CreateSut();
  		try
 		{ 
 			await service.WriteAsync(string.Empty, "content");

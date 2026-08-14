@@ -29,17 +29,19 @@ public sealed class LocalHostConversationService : IConversationService
         CoreSettings settings, 
         IConversationStore store,
         ICustomLoggerFactory loggerFactory,
-        HttpClient? httpClient = null)
+        IServiceProvider serviceProvider)
     {
         _fileDocumentService = fileDocumentService;
         _settings = settings;
         _store = store;
         _loggerFactory = loggerFactory;
         _log = _loggerFactory.CreateLogger<LocalHostConversationService, FileLogger<LocalHostConversationService>>();
-        
-        if(httpClient is not null)
+
+        _httpClient = serviceProvider.GetService<HttpClient>()
+            ?? serviceProvider.GetKeyedService<HttpClient>("OllamaClient");
+
+        if (_httpClient is not null)
         {
-            _httpClient = httpClient;
             _log.LogInfo($"Using provided HttpClient at {_httpClient.BaseAddress}");
         }
     }
@@ -118,7 +120,7 @@ public sealed class LocalHostConversationService : IConversationService
         var endpoint = settings.Endpoint;
         var modelName = settings.Model;
 
-        var client = _httpClient ?? new HttpClient();
+        var client = _httpClient ?? throw new ArgumentNullException(nameof(_httpClient), "HttpClient must be provided to create a conversation.");
         if (client.BaseAddress is null)
         {
             client.BaseAddress = new Uri(endpoint);
@@ -126,12 +128,13 @@ public sealed class LocalHostConversationService : IConversationService
 
         AIAgent agent = new OllamaApiClient(client, modelName)
             .AsAIAgent(
+                name: "Terry",
                 instructions: "You are a helpful assistant.", 
-                name: "Assistant",
                 loggerFactory: _loggerFactory,
-                tools: [
-                    AIFunctionFactory.Create(DocumentTools.ReadDocument),
-                    AIFunctionFactory.Create(DocumentTools.ListDocumentNames)
+                tools: 
+                [
+                    AIFunctionFactory.Create(DocumentTools.ReadDocument, nameof(DocumentTools.ReadDocument), "Reads the content of a document by its name."),
+                    AIFunctionFactory.Create(DocumentTools.ListDocumentNames, nameof(DocumentTools.ListDocumentNames), "Lists the names of all the documents available in the document service.")
                 ]); 
 
         return new ConversationState(agent);

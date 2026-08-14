@@ -16,13 +16,14 @@ using Xunit;
 using Moq;
 using Moq.Protected;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HomeBase.Core.Tests.Chat;
 
 public class LocalHostConversationServiceTests : IDisposable
 {
     private readonly string _tempDirectory;
-    private readonly LocalHostConversationService _service;
+    private readonly IServiceCollection _serviceCollection;
 
     public LocalHostConversationServiceTests()
     {
@@ -34,7 +35,6 @@ public class LocalHostConversationServiceTests : IDisposable
             Path.Combine(_tempDirectory, "legacy", "local_settings.json"));
         var store = new SqliteConversationStore(Path.Combine(_tempDirectory, "homebase.db"));
         var fileDocumentService = new FileDocumentService(Path.Combine(_tempDirectory, "documents"), loggerFactory);
-        _service = new LocalHostConversationService(fileDocumentService, settings, store, loggerFactory);
     }
 
     public void Dispose()
@@ -48,7 +48,15 @@ public class LocalHostConversationServiceTests : IDisposable
     [Fact]
     public async Task ReturnsFailureForEmptyConversationId()
     {
-        var events = await CollectAsync(_service.SendMessageAsync(string.Empty, "hello"));
+        var sut = new LocalHostConversationService(
+            new Mock<IDocumentService>().Object,
+            new CoreSettings(new Mock<ICustomLoggerFactory>().Object,
+                Path.Combine(_tempDirectory, "settings.json"),
+                Path.Combine(_tempDirectory, "legacy", "local_settings.json")),
+            new SqliteConversationStore(Path.Combine(_tempDirectory, "homebase.db")),
+            new Mock<ICustomLoggerFactory>().Object,
+            new ServiceCollection().BuildServiceProvider());
+        var events = await CollectAsync(sut.SendMessageAsync(string.Empty, "hello"));
 
         var failure = Assert.Single(events);
         var failed = Assert.IsType<ChatFailed>(failure);
@@ -58,7 +66,15 @@ public class LocalHostConversationServiceTests : IDisposable
     [Fact]
     public async Task ReturnsFailureForEmptyContent()
     {
-        var events = await CollectAsync(_service.SendMessageAsync("conversation-1", "   "));
+        var sut = new LocalHostConversationService(
+            new Mock<IDocumentService>().Object,
+            new CoreSettings(new Mock<ICustomLoggerFactory>().Object,
+                Path.Combine(_tempDirectory, "settings.json"),
+                Path.Combine(_tempDirectory, "legacy", "local_settings.json")),
+            new SqliteConversationStore(Path.Combine(_tempDirectory, "homebase.db")),
+            new Mock<ICustomLoggerFactory>().Object,
+            new ServiceCollection().BuildServiceProvider());
+        var events = await CollectAsync(sut.SendMessageAsync("conversation-1", "   "));
 
         var failure = Assert.Single(events);
         var failed = Assert.IsType<ChatFailed>(failure);
@@ -107,7 +123,9 @@ public class LocalHostConversationServiceTests : IDisposable
             settings,
             storeMock.Object,
             loggerFactory,
-            httpClient);
+            new ServiceCollection()
+                .AddSingleton(httpClient)
+                .BuildServiceProvider());
 
         var events = await CollectAsync(sut.SendMessageAsync("test-conversation", "Hello, assistant!"));
 
@@ -222,7 +240,16 @@ public class LocalHostConversationServiceTests : IDisposable
             Path.Combine(_tempDirectory, "legacy", "local_settings.json"));
         var store = new SqliteConversationStore(Path.Combine(_tempDirectory, "homebase-tool-output.db"));
         var fileDocumentService = new FileDocumentService(documentRoot, loggerFactory);
-        var service = new LocalHostConversationService(fileDocumentService, settings, store, loggerFactory, httpClient);
+        var sut = new LocalHostConversationService(
+            new Mock<IDocumentService>().Object,
+            new CoreSettings(loggerFactory,
+                Path.Combine(_tempDirectory, "settings.json"),
+                Path.Combine(_tempDirectory, "legacy", "local_settings.json")),
+            new SqliteConversationStore(Path.Combine(_tempDirectory, "homebase.db")),
+            loggerFactory,
+            new ServiceCollection()
+                .AddSingleton(httpClient)
+                .BuildServiceProvider());
 
         var previousDocumentService = DocumentTools.DocumentService;
         DocumentTools.DocumentService = fileDocumentService;
@@ -230,7 +257,7 @@ public class LocalHostConversationServiceTests : IDisposable
         // Act
         try
         {
-            var events = await CollectAsync(service.SendMessageAsync("conversation-1", "read the file"));
+            var events = await CollectAsync(sut.SendMessageAsync("conversation-1", "read the file"));
 
             // Assert
             Assert.DoesNotContain(events, e => e is ChatFailed);
