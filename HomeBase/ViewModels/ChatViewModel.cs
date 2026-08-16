@@ -120,7 +120,7 @@ namespace HomeBase.ViewModels
             Messages.Add(new ChatMessageViewModel(text, true));
             Messages.Add(assistantMessage);
 
-            _sendCancellation = new CancellationTokenSource();
+            _sendCancellation = new CancellationTokenSource(TimeSpan.FromMinutes(5));
 
             try
             {

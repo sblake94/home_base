@@ -6,11 +6,10 @@ using HomeBase.Core.Documents;
 using HomeBase.Core.Settings;
 using HomeBase.Core.Tools;
 using HomeBase.SharedLib.Logging;
-using OllamaSharp;
-using OllamaSharp.Models.Chat;
-using OllamaSharp.Tools;
-using OllamaChat = OllamaSharp.Chat;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Agents.AI;
+using OllamaSharp;
 
 namespace HomeBase.Core.Chat;
 
@@ -37,10 +36,12 @@ public sealed class LocalHostConversationService : IConversationService
         _loggerFactory = loggerFactory;
         _log = _loggerFactory.CreateLogger<LocalHostConversationService, FileLogger<LocalHostConversationService>>();
         
-        var httpClient = serviceProvider.GetRequiredService<HttpClient>();
-        if(httpClient is not null)
+        _httpClient = serviceProvider.GetService<HttpClient>()
+            ?? serviceProvider.GetKeyedService<HttpClient>("OllamaClient");
+
+        if (_httpClient is not null)
         {
-            _httpClient = httpClient;
+            _log.LogInfo($"Using provided HttpClient at {_httpClient.BaseAddress}");
         }
     }
 
@@ -49,114 +50,44 @@ public sealed class LocalHostConversationService : IConversationService
         string content,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(conversationId))
+        if(string.IsNullOrWhiteSpace(conversationId))
         {
-            yield return new ChatFailed("invalid_conversation", "A conversation ID is required.");
+            yield return new ChatFailed("invalid_conversation", "The conversation ID cannot be null.");
             yield break;
         }
 
-        if (string.IsNullOrWhiteSpace(content))
+        if(string.IsNullOrWhiteSpace(content))
         {
             yield return new ChatFailed("invalid_message", "Message content is required.");
             yield break;
         }
 
         var state = _conversations.GetOrAdd(conversationId, _ => CreateConversation());
-        
-        state.Tools.Clear();
-        state.Tools.AddRange(
-        [
-            new ListDocumentNamesTool(),
-            new ReadDocumentTool()
-        ]);
-        
-        state.Chat.OnToolCall += HandleToolCall;
-        state.Chat.OnToolResult += HandleToolResult;
 
         await state.SendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-        var messageId = Guid.NewGuid().ToString("N");
-        _store.RecordUserMessage(conversationId, content);
-        _store.BeginAssistantMessage(conversationId, messageId);
+        var messageId = Guid.NewGuid().ToString();
 
         var accumulated = new StringBuilder();
-        var cancelled = false;
-        Exception? failure = null;
+        
+        _log.LogInfo($"Sending message to conversation {conversationId} with message ID {messageId}: {content}");
 
-        foreach(var tool in state.Tools)
-        {
-            if (tool is not Tool chatTool)
-            {
-                _log.LogWarning($"Tool {tool.GetType().Name} is not compatible with {nameof(Tool)} and will be skipped.");
-                continue;
-            }
-
-            _log.LogInfo($"{chatTool.Function?.Name ?? "UnKnown"}\t\t[purple]{chatTool.Function?.Description ?? "No description"}[/]");
-        }
-
-
-        var enumerator = state.Chat.SendAsync(content, state.Tools, null, null, cancellationToken).GetAsyncEnumerator(cancellationToken);
         try
         {
-            yield return new AssistantStarted(messageId);
-
-            while (true)
+            await foreach (var token in state.Agent.RunStreamingAsync(content, state.Session).ConfigureAwait(false))
             {
-                string? token = null;
-                var hasNext = false;
-
-                // Isolated from the yields below: an iterator cannot yield inside a try/catch (CS1626).
-                try
-                {
-                    hasNext = await enumerator.MoveNextAsync().ConfigureAwait(false);
-                    if (hasNext)
-                    {
-                        token = enumerator.Current;
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    cancelled = true;
-                }
-                catch (Exception ex)
-                {
-                    failure = ex;
-                }
-
-                if (cancelled || failure is not null || !hasNext)
-                {
-                    break;
-                }
-
-                accumulated.Append(token);
-                yield return new AssistantToken(token!);
+                yield return new AssistantToken(token.Text);
+                accumulated.Append(token.Text);
             }
+            
+            yield return new AssistantCompleted(messageId);
+            _log.LogInfo($"Message {messageId} sent successfully to conversation {conversationId}. Accumulated response: {accumulated}");
         }
         finally
         {
-            await enumerator.DisposeAsync().ConfigureAwait(false);
-            state.Chat.OnToolCall -= HandleToolCall;
-            state.Chat.OnToolResult -= HandleToolResult;
             state.SendLock.Release();
         }
-
-        if (cancelled)
-        {
-            _store.MarkIncomplete(messageId, accumulated.ToString());
-            yield break;
-        }
-
-        if (failure is not null)
-        {
-            _store.MarkFailed(messageId, accumulated.ToString());
-            yield return new ChatFailed("ollama_unreachable", "Unable to reach the Ollama backend.");
-            yield break;
-        }
-
-        _store.MarkCompleted(messageId, accumulated.ToString());
-        yield return new AssistantCompleted(messageId);
     }
-
 
     public ValueTask<(bool IsReady, string Message)> GetStatusAsync(CancellationToken cancellationToken = default)
     {
@@ -181,47 +112,42 @@ public sealed class LocalHostConversationService : IConversationService
         }
     }
 
-    private void HandleToolCall(object? sender, Message.ToolCall e)
-    {
-        
-    }
-
-    private void HandleToolResult(object? sender, ToolResult e)
-    {
-        _log.LogInfo($"Tool result received: {e.Tool.GetType().Name} - {e.Result}");
-    }
-
     private ConversationState CreateConversation()
     {
         var settings = _settings.GetOllamaSettings();
+        var endpoint = settings.Endpoint;
+        var modelName = settings.Model;
 
-        IOllamaApiClient client;
-        
-        if (_httpClient != null)
-        {   
-            // Use the provided HttpClient for testing purposes
-            client = new OllamaApiClient(_httpClient, settings.Model);
-        }
-        else
+        var client = _httpClient ?? throw new ArgumentNullException(nameof(_httpClient), "HttpClient must be provided to create a conversation.");
+        if (client.BaseAddress is null)
         {
-            client = new OllamaApiClient(settings.Endpoint, settings.Model);
+            client.BaseAddress = new Uri(endpoint);
         }
 
-        _log.LogInfo($"Created new Ollama conversation with endpoint {settings.Endpoint} and model {settings.Model}");
-        _log.LogInfo($"System prompt: {settings.SystemPrompt}");
-        
-        return new ConversationState(new OllamaChat(client, settings.SystemPrompt));
+        var instuctionsContents = File.ReadAllText("/home/sam/.config/HomeBase/core_agent_system_prompt.md");
+        AIAgent agent = new OllamaApiClient(client, modelName)
+            .AsAIAgent(
+                name: "Terry",
+                instructions: instuctionsContents,
+                loggerFactory: _loggerFactory,
+                tools: 
+                [
+                    AIFunctionFactory.Create(DocumentTools.ReadDocument, nameof(DocumentTools.ReadDocument), "Reads the content of a document by its name."),
+                    AIFunctionFactory.Create(DocumentTools.ListDocumentNames, nameof(DocumentTools.ListDocumentNames), "Lists the names of all the documents available in the document service.")
+                ]); 
+
+        return new ConversationState(agent);
     }
 
     private sealed class ConversationState
     {
-        public ConversationState(OllamaChat chat)
+        public ConversationState(AIAgent agent)
         {
-            Chat = chat;
+            Agent = agent;
         }
 
-        public OllamaChat Chat { get; }
+        public AIAgent Agent { get; }
+        public AgentSession Session { get; set; }
         public SemaphoreSlim SendLock { get; } = new(1, 1);
-        public List<Tool> Tools { get; } = new();
     }
 }

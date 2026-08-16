@@ -1,12 +1,9 @@
+using System.ComponentModel;
 using HomeBase.Core.Documents;
-using HomeBase.SharedLib.Logging;
-using OllamaSharp;
-using OllamaSharp.Models.Chat;
-using OllamaSharp.Tools;
 
 namespace HomeBase.Core.Tools;
 
-public static class DocumentTools
+public class DocumentTools
 {
     public static IDocumentService? DocumentService { get; set; }
 
@@ -14,8 +11,8 @@ public static class DocumentTools
     /// Lists the names of all the documents available in the document service.
     /// </summary>
     /// <returns>A list of document names.</returns>
-    [OllamaTool]
-    public static object ListDocumentNames()
+    [Description("Lists the names of all the documents available in the document service.")]
+    public static IEnumerable<string> ListDocumentNames()
     {
         try
         {
@@ -39,7 +36,7 @@ public static class DocumentTools
     /// </summary>
     /// <param name="documentName">The name of the document to read.</param>
     /// <returns>The content of the document as a string.</returns>
-    [OllamaTool]
+    [Description("Reads the content of a document by its name.")]
     public static string ReadDocument(string documentName)
     {
         try
