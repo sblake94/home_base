@@ -2,9 +2,11 @@ using System;
 using System.IO;
 using System.Text.Json;
 using HomeBase.Core.Settings;
+using HomeBase.SharedLib.Logging;
+using Moq;
 using Xunit;
 
-namespace HomeBase.Core.Tests;
+namespace HomeBase.Core.Tests.Settings;
 
 public class CoreSettingsTests : IDisposable
 {
@@ -29,7 +31,7 @@ public class CoreSettingsTests : IDisposable
         var settingsPath = Path.Combine(_tempDirectory, "settings.json");
         var legacyPath = Path.Combine(_tempDirectory, "legacy", "local_settings.json");
 
-        var settings = new CoreSettings(settingsPath, legacyPath);
+        var settings = new CoreSettings(new Mock<ICustomLoggerFactory>().Object, settingsPath, legacyPath);
 
         Assert.True(File.Exists(settingsPath));
         var ollamaSettings = settings.GetOllamaSettings();
@@ -47,7 +49,7 @@ public class CoreSettingsTests : IDisposable
         var expected = new OllamaSettings("http://example.local:11434", "custom-model", "Custom prompt");
         File.WriteAllText(settingsPath, JsonSerializer.Serialize(expected));
 
-        var settings = new CoreSettings(settingsPath, legacyPath);
+        var settings = new CoreSettings(new Mock<ICustomLoggerFactory>().Object, settingsPath, legacyPath);
         var actual = settings.GetOllamaSettings();
 
         Assert.Equal(expected, actual);

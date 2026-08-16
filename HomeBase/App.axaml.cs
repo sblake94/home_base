@@ -16,8 +16,8 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var chatViewModel = ServiceManager.GetRequiredService<ViewModels.ChatViewModel>();
-            desktop.MainWindow = new MainWindow(chatViewModel);
+            var mainWindowViewModel = ServiceManager.GetRequiredService<ViewModels.MainWindowViewModel>();
+            desktop.MainWindow = new MainWindow(mainWindowViewModel);
         }
 
         base.OnFrameworkInitializationCompleted();

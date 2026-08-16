@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:AvaloniaEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+             xmlns:vm="clr-namespace:HomeBase.ViewModels"
+             x:Class="HomeBase.Views.TextEditorView"
+             x:DataType="vm:TextEditorViewModel">
+  <Grid>
+    <Border Background="{DynamicResource ContentBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="5">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+
+        
+        <Grid Background="Transparent"
+            Grid.Row="2"
+            Margin="5"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Bottom"
+            ColumnDefinitions="*,Auto,Auto">
+          <TextBox Text="{Binding Path}"
+                     Grid.Column="0"
+                     Margin="5"
+                     Padding="5"
+                     IsReadOnly="False"/>
+          <Button Content="Open"
+                  Command="{Binding OpenCommand}"
+                  Grid.Column="1"
+                  Background="{DynamicResource ButtonBackgroundBrush}"
+                  Foreground="{DynamicResource ChatBubbleTextBrush}"
+                  Margin="5"/>
+          <Button Content="Save"
+                  Command="{Binding SaveCommand}"
+                  CommandParameter="{Binding Document.Text}"
+                  Grid.Column="2"
+                  Background="{DynamicResource ButtonBackgroundBrush}"
+                  Foreground="{DynamicResource ChatBubbleTextBrush}"
+                  Margin="5"/>
+                  
+        </Grid>
+        <AvaloniaEdit:TextEditor  Document="{Binding Document, Mode=TwoWay}"
+                                  Background="Transparent"
+                                  Grid.Row="1"
+                                  Padding="5"/>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

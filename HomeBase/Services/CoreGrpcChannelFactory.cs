@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Net.Client;
 
-namespace HomeBase.Services.ChatService;
+namespace HomeBase.Services;
 
 public sealed class CoreGrpcChannelFactory : IDisposable
 {

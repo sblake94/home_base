@@ -7,15 +7,10 @@ using HomeBase.Contracts.Chat.V1;
 
 namespace HomeBase.Services.ChatService;
 
-public sealed class CoreChatService : IChatService, IBackendStatusService
+public sealed class CoreChatService(CoreGrpcChannelFactory channelFactory) : IChatService, IBackendStatusService
 {
-    private readonly ChatApi.ChatApiClient _client;
+    private readonly ChatApi.ChatApiClient _client = new(channelFactory.CreateChannel());
     private readonly string _conversationId = Guid.NewGuid().ToString("N");
-
-    public CoreChatService(CoreGrpcChannelFactory channelFactory)
-    {
-        _client = new ChatApi.ChatApiClient(channelFactory.CreateChannel());
-    }
 
     public async IAsyncEnumerable<string> SubmitUserMessageAsync(
         string newMessage,

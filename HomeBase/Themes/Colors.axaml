@@ -8,6 +8,7 @@
   <SolidColorBrush x:Key="ChatBubbleBackgroundBrush" Color="#444444" />
   <SolidColorBrush x:Key="ChatBubbleOwnBackgroundBrush" Color="#445544" />
   <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="Green" />
+  <SolidColorBrush x:Key="GridSplitterBackground" Color="DarkOrange" />
 
   <!-- Text -->
   <SolidColorBrush x:Key="TitleTextBrush" Color="#111111" />
