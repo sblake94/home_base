@@ -48,3 +48,32 @@ its own socket at startup. It does not implement systemd fd-based socket
 activation (a paired `.socket` unit) — that remains a possible future
 enhancement.
 
+## Running with Docker
+
+`docker-compose.yml` builds `HomeBase.Service` (via `Dockerfile.service`) and
+runs it alongside an `ollama` container:
+
+```
+docker compose up --build
+```
+
+The service listens on `http://localhost:8080` (gRPC over HTTP/2, controlled
+by the `HOMEBASE_TCP_PORT` env var) in addition to its Unix socket, since
+Unix sockets don't cross container boundaries. Settings and the SQLite
+database persist in the `homebase-config`/`homebase-data` volumes.
+
+Ollama itself isn't installed in the service image — it runs as the `ollama`
+sibling container. On first run, edit the settings file in the
+`homebase-config` volume (or exec into the container) so `Endpoint` points to
+`http://ollama:11434` instead of the `http://localhost:11434` default, then
+pull a model into the `ollama` container: `docker compose exec ollama ollama pull llama2`.
+
+The Avalonia UI (`HomeBase`) only supports connecting over the Unix socket
+today, so it must be run outside Docker against a locally-running
+`HomeBase.Service` — it can't yet talk to the Dockerized backend over TCP.
+
+The repository root `Dockerfile` is a separate template used by the
+automated evaluation harness (fetches a pinned commit via `$REPO_URL`/
+`$BASE_COMMIT`) and is not the one used by `docker-compose.yml`.
+
+
