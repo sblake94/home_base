@@ -123,12 +123,12 @@ public sealed class LocalHostConversationService : IConversationService
         {
             client.BaseAddress = new Uri(endpoint);
         }
-
-        var instuctionsContents = File.ReadAllText("/home/sam/.config/HomeBase/core_agent_system_prompt.md");
+        var instructionsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "HomeBase", "core_agent_system_prompt.md");
+        var instructionsContents = File.ReadAllText(instructionsPath);
         AIAgent agent = new OllamaApiClient(client, modelName)
             .AsAIAgent(
                 name: "Terry",
-                instructions: instuctionsContents,
+                instructions: instructionsContents,
                 loggerFactory: _loggerFactory,
                 tools: 
                 [

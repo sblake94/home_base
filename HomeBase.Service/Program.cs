@@ -18,6 +18,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options =>
 {
 	options.ListenUnixSocket(socketPath, listenOptions => listenOptions.Protocols = HttpProtocols.Http2);
+
+	// Opt-in TCP listener for clients that can't reach the Unix socket (e.g. across a container boundary).
+	if (int.TryParse(Environment.GetEnvironmentVariable("HOMEBASE_TCP_PORT"), out var tcpPort))
+	{
+		options.ListenAnyIP(tcpPort, listenOptions => listenOptions.Protocols = HttpProtocols.Http2);
+	}
 });
 
 var workspacePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "HomeBase");
