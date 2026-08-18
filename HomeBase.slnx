@@ -4,5 +4,6 @@
   <Project Path="HomeBase.Core.Tests/HomeBase.Core.Tests.csproj" />
   <Project Path="HomeBase.Core/HomeBase.Core.csproj" />
   <Project Path="HomeBase.Service/HomeBase.Service.csproj" />
+  <Project Path="HomeBase.Tests/HomeBase.Tests.csproj" />
   <Project Path="HomeBase/HomeBase.csproj" />
 </Solution>
