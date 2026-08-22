@@ -20,21 +20,21 @@ public sealed class LocalHostConversationService : IConversationService
     private readonly ConcurrentDictionary<string, ConversationState> _conversations = new();
     private readonly IDocumentService _fileDocumentService;
     private readonly HttpClient? _httpClient;
-    private readonly ILogger<LocalHostConversationService> _log;
+    private readonly ICustomLogger<LocalHostConversationService> _log;
 
-    private readonly ILoggerFactory _loggerFactory;
+    private readonly ICustomLoggerFactory _loggerFactory;
     public LocalHostConversationService(
         IDocumentService fileDocumentService, 
         CoreSettings settings, 
         IConversationStore store,
-        ILoggerFactory loggerFactory,
+        ICustomLoggerFactory loggerFactory,
         HttpClient? httpClient = null)
     {
         _fileDocumentService = fileDocumentService;
         _settings = settings;
         _store = store;
         _loggerFactory = loggerFactory;
-        _log = _loggerFactory.CreateLogger<LocalHostConversationService>();
+        _log = _loggerFactory.CreateLogger<LocalHostConversationService, FileLogger<LocalHostConversationService>>();
         
         if(httpClient is not null)
         {

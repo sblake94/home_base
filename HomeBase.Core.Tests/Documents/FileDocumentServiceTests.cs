@@ -22,7 +22,14 @@ public class FileDocumentServiceTests : IDisposable
 		}
 	}
 
-	private FileDocumentService CreateService() => new(_tempDirectory, new Mock<ICustomLoggerFactory>().Object);
+	private FileDocumentService CreateService()
+	{
+		var loggerFactoryMock = new Mock<ICustomLoggerFactory>();
+		loggerFactoryMock.Setup(f => f.CreateLogger<FileDocumentService, FileLogger<FileDocumentService>>())
+			.Returns(new Mock<ICustomLogger<FileDocumentService>>().Object);
+		return new(_tempDirectory, loggerFactoryMock.Object);
+	} 
+		
 
 	[Fact]
 	public async Task WritesAndReadsDocumentContent()
