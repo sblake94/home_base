@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using AvaloniaEdit.Document;
+using AvaloniaEdit.Highlighting;
 using HomeBase.Commands;
 using HomeBase.Services.DocumentService;
 using HomeBase.SharedLib.Logging;
@@ -20,6 +21,7 @@ public sealed class TextEditorViewModel : ViewModelBase
         _documentService = documentService;
         var userName = Environment.UserName;
         _currentlyLoadedFilePath = $"/home/{userName}/HomeBase/Documents/SecretDocument.txt";
+        FileExtension = GetFileExtension(_currentlyLoadedFilePath);
 
         _logger.LogInfo($"TextEditorViewModel initialized. Current user: {userName}, default document path: {_currentlyLoadedFilePath}");
 
@@ -63,6 +65,58 @@ public sealed class TextEditorViewModel : ViewModelBase
         }
     }
 
+    public enum FileExtensions
+    {
+        Txt,
+        Cs,
+        Json,
+        Xml,
+        Html,
+        Css,
+        Js,
+        Python,
+        Unknown
+    }
+    private FileExtensions _fileExtension;
+    public FileExtensions FileExtension
+    {
+        get => _fileExtension;
+        set
+        {
+            if (_fileExtension != value)
+            {
+                _fileExtension = value;
+                OnPropertyChanged(nameof(FileExtension));
+                OnPropertyChanged(nameof(SyntaxHighlighting));
+            }
+        }
+    }
+
+    public IHighlightingDefinition? SyntaxHighlighting => FileExtension switch
+    {
+        FileExtensions.Cs => HighlightingManager.Instance.GetDefinition("C#"),
+        FileExtensions.Json => HighlightingManager.Instance.GetDefinition("Json"),
+        FileExtensions.Xml => HighlightingManager.Instance.GetDefinition("XML"),
+        FileExtensions.Html => HighlightingManager.Instance.GetDefinition("HTML"),
+        FileExtensions.Css => HighlightingManager.Instance.GetDefinition("CSS"),
+        FileExtensions.Js => HighlightingManager.Instance.GetDefinition("JavaScript"),
+        FileExtensions.Python => HighlightingManager.Instance.GetDefinition("Python"),
+        _ => null
+    };
+
+    private static FileExtensions GetFileExtension(string path) =>
+        System.IO.Path.GetExtension(path)?.ToLowerInvariant() switch
+        {
+            ".txt" => FileExtensions.Txt,
+            ".cs" => FileExtensions.Cs,
+            ".json" => FileExtensions.Json,
+            ".xml" => FileExtensions.Xml,
+            ".html" => FileExtensions.Html,
+            ".css" => FileExtensions.Css,
+            ".js" => FileExtensions.Js,
+            ".py" => FileExtensions.Python,
+            _ => FileExtensions.Unknown
+        };
     private async Task SaveDocumentAsync()
     {
         // Implement the logic to save the document here
@@ -70,6 +124,10 @@ public sealed class TextEditorViewModel : ViewModelBase
         {
             await _documentService.WriteAsync(_currentlyLoadedFilePath, _document.Text);
             _logger.LogInfo($"Document saved to {_currentlyLoadedFilePath}");
+            FileExtension = GetFileExtension(_currentlyLoadedFilePath);
+            OnPropertyChanged(nameof(Path));
+            OnPropertyChanged(nameof(Content));
+            OnPropertyChanged(nameof(SyntaxHighlighting));
         }
         catch (Exception ex)
         {
@@ -86,6 +144,9 @@ public sealed class TextEditorViewModel : ViewModelBase
             var content = await _documentService.ReadAsync(path);
             Document = new TextDocument { Text = content };
             _currentlyLoadedFilePath = path;
+            OnPropertyChanged(nameof(Path));
+            FileExtension = GetFileExtension(_currentlyLoadedFilePath);
+
             _logger.LogInfo($"Document opened from {path}");
         }
         catch (Exception ex)

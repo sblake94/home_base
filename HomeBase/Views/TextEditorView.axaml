@@ -44,10 +44,13 @@
                   Margin="5"/>
                   
         </Grid>
-        <AvaloniaEdit:TextEditor  Document="{Binding Document, Mode=TwoWay}"
-                                  Background="Transparent"
-                                  Grid.Row="1"
-                                  Padding="5"/>
+        <AvaloniaEdit:TextEditor Document="{Binding Document, Mode=TwoWay}"
+                                 x:Name="DocumentContents"
+                                 SyntaxHighlighting="{Binding SyntaxHighlighting}"
+                                 Background="Transparent"
+                                 Grid.Row="1"
+                                 Padding="5">
+        </AvaloniaEdit:TextEditor>
       </Grid>
     </Border>
   </Grid>
