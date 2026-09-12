@@ -4,6 +4,9 @@
              xmlns:vm="clr-namespace:HomeBase.ViewModels"
              x:Class="HomeBase.Views.TextEditorView"
              x:DataType="vm:TextEditorViewModel">
+  <UserControl.Resources>
+
+  </UserControl.Resources>
   <Grid>
     <Border Background="{DynamicResource ContentBackgroundBrush}"
             BorderBrush="{DynamicResource BorderBrush}"
@@ -47,6 +50,8 @@
         <AvaloniaEdit:TextEditor Document="{Binding Document, Mode=TwoWay}"
                                  x:Name="DocumentContents"
                                  SyntaxHighlighting="{Binding SyntaxHighlighting}"
+                                 ShowLineNumbers="True"
+                                 FontFamily="Cascadia Code,Consolas,Menlo,Monospace"
                                  Background="Transparent"
                                  Grid.Row="1"
                                  Padding="5">
